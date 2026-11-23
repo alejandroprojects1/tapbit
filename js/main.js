@@ -7,6 +7,7 @@ const UI = (() => {
   // ---------- Telas ----------
   function show(id) {
     document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === id));
+    if (id !== 'game') Sound.startMusic('menu');
     if (id === 'home') renderHome();
     if (id === 'map') renderMap();
     if (id === 'shop') Shop.render();

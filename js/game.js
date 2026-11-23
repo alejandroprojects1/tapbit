@@ -203,7 +203,7 @@ const Game = (() => {
     if (L.rule) banner(L.rule.name, 'gold');
     else banner(L.name);
     if (L.rule) setTimeout(() => { if (st && !st.ended) toast(L.rule.hint, '', 'info'); }, 900);
-    Sound.startMusic(L.sector ? 100 + L.sector * 6 + L.index * 3 : 128);
+    Sound.startMusic(musicStyle());
     cancelAnimationFrame(raf);
     last = performance.now();
     raf = requestAnimationFrame(frame);
@@ -222,10 +222,12 @@ const Game = (() => {
     if (!st || st.ended) return;
     st.paused = on;
     if (on) Sound.stopMusic();
-    else { Sound.startMusic(L.sector ? 100 + L.sector * 6 + L.index * 3 : 128); Sound.setOverdrive(st.overdrive); last = performance.now(); }
+    else { Sound.startMusic(musicStyle()); Sound.setOverdrive(st.overdrive); last = performance.now(); }
   }
 
   const alive = () => st.threats.filter((t) => !t.dead);
+  // clima da música de cada setor (combina com a hora do dia do cenário)
+  const musicStyle = () => (L.duration ? 'flash' : ['calm', 'calm', 'bright', 'sunset', 'boss'][L.sector] || 'calm');
 
   // ---------- Fases de montar números (build) ----------
   function nextValue() {
@@ -715,6 +717,12 @@ const Game = (() => {
     st.rings.forEach((r) => { r.life -= dt * 1.2; });
     st.rings = st.rings.filter((r) => r.life > 0);
     if (st.boss && st.boss.flash > 0) st.boss.flash -= dt;
+
+    // tensão da música: meteoro/drone perto do escudo ou chefe quase atacando
+    let danger = 0;
+    st.threats.forEach((t) => { if (!t.dead && !t.targeted && !t.float) danger = Math.max(danger, t.p); });
+    if (st.boss && !st.boss.dead && st.wait <= 0) danger = Math.max(danger, st.charge);
+    Sound.setTension(st.ended ? 0 : danger);
 
     // o canhão mira na ameaça mais perigosa
     const c = cannonPos();
