@@ -42,7 +42,15 @@ const UI = (() => {
   }
 
   // ---------- Início ----------
+  // próxima fase da campanha (primeira ainda sem estrelas)
+  function nextToPlay() {
+    return ALL_LEVELS.filter((l) => l.sector <= 4).find((l) => isUnlocked(l) && !(Store.data.stars[l.id] > 0)) || null;
+  }
+
   function renderHome() {
+    const nx = nextToPlay();
+    $('play-next').textContent = nx ? (Store.totalStars() ? `Continuar: Setor ${nx.id}` : 'Começar a aventura') : 'Todos os setores completos!';
+    if (window.Cover) Cover.refresh();
     $('home-stars').textContent = Store.totalStars();
     $('home-streak').textContent = Store.streak();
     $('missions-dot').classList.toggle('hidden', !Missions.pending());
@@ -308,7 +316,6 @@ const UI = (() => {
   document.querySelectorAll('[data-go]').forEach((b) => b.addEventListener('click', () => { Sound.click(); show(b.dataset.go); }));
 
   // ---------- Início ----------
-  RobotView.set($('home-robot'), () => Store.data.equip.robot);
   RobotView.set($('shop-robot'), () => Store.data.equip.robot, 'cheer');
   applyTheme();
   Missions.today();
