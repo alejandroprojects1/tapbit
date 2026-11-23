@@ -184,6 +184,8 @@ const Scene3D = (() => {
         vec3 c = mix(uHor, uMid, smoothstep(0.0, 0.35, h));
         c = mix(c, uTop, smoothstep(0.35, 1.0, h));
         if (vY < 0.0) c = uHor;
+        float n = fract(sin(dot(gl_FragCoord.xy, vec2(12.9898, 78.233))) * 43758.5453);
+        c += (n - 0.5) * 0.018;   // granulado sutil: tira as faixas do degradê
         gl_FragColor = vec4(c, 1.0);
       }`,
     depthWrite: false, depthTest: false,
@@ -192,12 +194,66 @@ const Scene3D = (() => {
   const discTex = canvasTex(128, 128, (g, w) => {
     g.fillStyle = '#fff'; g.beginPath(); g.arc(w / 2, w / 2, w * 0.46, 0, Math.PI * 2); g.fill();
   });
-  const gridTex2 = canvasTex(128, 128, (g, w) => {
-    g.fillStyle = '#000'; g.fillRect(0, 0, w, w);
-    g.strokeStyle = '#fff'; g.lineWidth = 2; g.globalAlpha = 0.6;
-    g.strokeRect(0, 0, w, w);
-  });
-  gridTex2.wrapS = gridTex2.wrapT = THREE.RepeatWrapping;
+
+  // ---------- Texturas procedurais (claras, para a cor da hora do dia aparecer por cima) ----------
+  const prng = (seed) => () => { seed = (seed * 16807) % 2147483647; return (seed - 1) / 2147483646; };
+  function texRepeat(t) { t.wrapS = t.wrapT = THREE.RepeatWrapping; return t; }
+  // grama: fundo claro com pontinhos e folhinhas em tons variados
+  const grassTex = texRepeat(canvasTex(256, 256, (g, w) => {
+    const R = prng(7);
+    g.fillStyle = '#e9e9e9'; g.fillRect(0, 0, w, w);
+    for (let i = 0; i < 1800; i++) {
+      const x = R() * w, y = R() * w, v = 200 + Math.floor(R() * 55);
+      g.fillStyle = `rgb(${v},${v},${v})`;
+      g.fillRect(x, y, 2, 2);
+    }
+    g.lineCap = 'round';
+    for (let i = 0; i < 420; i++) {
+      const x = R() * w, y = R() * w, l = 4 + R() * 7, v = R() < 0.5 ? 255 : 190 + Math.floor(R() * 30);
+      g.strokeStyle = `rgba(${v},${v},${v},.9)`; g.lineWidth = 1.6;
+      g.beginPath(); g.moveTo(x, y); g.quadraticCurveTo(x + (R() - 0.5) * 4, y - l * 0.6, x + (R() - 0.5) * 6, y - l); g.stroke();
+    }
+  }));
+  // gramado com faixas de corte que somem no horizonte
+  const lawnTex = texRepeat(canvasTex(256, 256, (g, w) => {
+    const R = prng(11);
+    g.fillStyle = '#efefef'; g.fillRect(0, 0, w / 2, w);
+    g.fillStyle = '#dcdcdc'; g.fillRect(w / 2, 0, w / 2, w);
+    for (let i = 0; i < 2600; i++) {
+      const v = 205 + Math.floor(R() * 50);
+      g.fillStyle = `rgba(${v},${v},${v},.8)`;
+      g.fillRect(R() * w, R() * w, 2, 3);
+    }
+  }));
+  // rocha dos meteoros: manchas e "crateras" suaves
+  const rockTex = texRepeat(canvasTex(256, 128, (g, w, h) => {
+    const R = prng(3);
+    g.fillStyle = '#f2f2f2'; g.fillRect(0, 0, w, h);
+    for (let i = 0; i < 26; i++) {
+      const x = R() * w, y = R() * h, r = 4 + R() * 14;
+      const gr = g.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, 'rgba(150,150,150,.55)'); gr.addColorStop(0.7, 'rgba(190,190,190,.35)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+      g.strokeStyle = 'rgba(255,255,255,.7)'; g.lineWidth = 1.5;
+      g.beginPath(); g.arc(x - r * 0.15, y - r * 0.15, r * 0.75, Math.PI * 0.9, Math.PI * 1.6); g.stroke();
+    }
+    for (let i = 0; i < 1500; i++) {
+      const v = 200 + Math.floor(R() * 55);
+      g.fillStyle = `rgb(${v},${v},${v})`;
+      g.fillRect(R() * w, R() * h, 2, 2);
+    }
+  }));
+  // nuvem: variação bem leve de tom
+  const cloudTex = texRepeat(canvasTex(128, 128, (g, w) => {
+    const R = prng(5);
+    g.fillStyle = '#ffffff'; g.fillRect(0, 0, w, w);
+    for (let i = 0; i < 40; i++) {
+      const x = R() * w, y = R() * w, r = 8 + R() * 20;
+      const gr = g.createRadialGradient(x, y, 0, x, y, r);
+      gr.addColorStop(0, 'rgba(225,225,235,.5)'); gr.addColorStop(1, 'rgba(255,255,255,0)');
+      g.fillStyle = gr; g.beginPath(); g.arc(x, y, r, 0, Math.PI * 2); g.fill();
+    }
+  }));
 
   // ---------- Luzes ----------
   const hemi = new THREE.HemisphereLight(0xffffff, 0x8fa0d8, 0.62);
@@ -243,10 +299,10 @@ const Scene3D = (() => {
   const rand = (a, b) => a + Math.random() * (b - a);
   // materiais que mudam de cor com a hora do dia
   const M = {
-    ground: toon(0xa7e8c0, { emissive: 0xffffff, emissiveMap: gridTex2, emissiveIntensity: 0.07 }),
-    far: toon(0xa9d9ee),
-    near: toon(0x86d9ad),
-    cloud: toon(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.25 }),
+    ground: toon(0xa7e8c0, { map: lawnTex }),
+    far: toon(0xa9d9ee, { map: grassTex }),
+    near: toon(0x86d9ad, { map: grassTex }),
+    cloud: toon(0xffffff, { map: cloudTex, emissive: 0xffffff, emissiveIntensity: 0.22 }),
     sun: new THREE.SpriteMaterial({ map: discTex, color: 0xfff3b0, fog: false, depthWrite: false }),
     sunGlow: new THREE.SpriteMaterial({ map: glowTex, color: 0xfff3b0, fog: false, depthWrite: false, transparent: true, opacity: 0.55 }),
     moon: new THREE.SpriteMaterial({ map: discTex, color: 0xfff6d8, fog: false, depthWrite: false, transparent: true }),
@@ -337,7 +393,8 @@ const Scene3D = (() => {
     }
 
     // chão
-    gridTex2.repeat.set(24, 24);
+    lawnTex.repeat.set(16, 60);
+    grassTex.repeat.set(10, 3);
     ground = new THREE.Mesh(new THREE.PlaneGeometry(W * 14, 5200), M.ground);
     ground.rotation.x = -Math.PI / 2;
     ground.position.set(0, gy, -2500);
@@ -441,7 +498,7 @@ const Scene3D = (() => {
     trail.material.color.setHex(0xffffff);
     trail.position.set(0, t.r * 2.1, -t.r * 0.5);
     g.add(trail);
-    const mat = toon(0x9b7bff, { emissive: 0x3a1a8a, emissiveIntensity: 0.35 });
+    const mat = toon(0x9b7bff, { map: rockTex, emissive: 0x3a1a8a, emissiveIntensity: 0.3 });
     const rock = ink(rockGeo(t.r, t.id), mat, 2.2);
     g.add(rock);
     // crateras
@@ -827,7 +884,7 @@ const Scene3D = (() => {
     if (baked && Math.abs(p - bakedP) > 0.02) { bake(); bakedP = p; }
     if (!baked) {
       animateEnv(dt, T, st);
-      gridTex2.offset.y = (gridTex2.offset.y + (st.overdrive ? 0.02 : 0.003)) % 1;
+      lawnTex.offset.y = (lawnTex.offset.y + (st.overdrive ? 0.02 : 0.003)) % 1;
     }
 
     // escudo
