@@ -51,6 +51,11 @@ const SECTORS = [
     desc: 'A tela é feita de pixels! 1 acende, 0 apaga. Complete as linhas e descubra a imagem.',
     levels: PIXEL_LEVELS.map((l) => Object.assign({ kind: 'pixel' }, l)),
   },
+  {
+    id: 6, name: 'Mensagem na Torre', icon: 'tower', color: '#fbbf24', isNew: true,
+    desc: 'O Bitinho está preso na torre! Ele acende 5 janelas para mandar cada letra. Descubra a frase.',
+    levels: TOWER_LEVELS.map((l) => Object.assign({ kind: 'tower' }, l)),
+  },
 ];
 
 SECTORS.forEach((s) => s.levels.forEach((l, i) => {
@@ -67,7 +72,7 @@ const nextLevel = (l) => ALL_LEVELS[ALL_LEVELS.indexOf(l) + 1] || null;
 function isUnlocked(l) {
   if (Store.data.unlockAll) return true;
   // o Mundo dos Pixels é uma trilha própria, aberta desde o começo
-  if (l.sector === 5) return l.index === 0 || (Store.data.stars[`5-${l.index}`] || 0) > 0;
+  if (l.sector >= 5) return l.index === 0 || (Store.data.stars[`${l.sector}-${l.index}`] || 0) > 0;
   const i = ALL_LEVELS.indexOf(l);
   return i === 0 || (Store.data.stars[ALL_LEVELS[i - 1].id] || 0) > 0;
 }

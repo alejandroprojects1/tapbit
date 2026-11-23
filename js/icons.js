@@ -23,6 +23,7 @@ const ICONS = {
   beam: '<path d="M4 20 20 4"/><circle cx="20" cy="4" r="1.5" fill="currentColor"/><path d="M4 14l2 2M10 20l-2-2"/>',
   pad: '<rect x="3" y="7" width="18" height="10" rx="4"/><path d="M8 10v4M6 12h4"/><circle cx="15.5" cy="11" r=".9" fill="currentColor"/><circle cx="17.5" cy="13" r=".9" fill="currentColor"/>',
   user: '<circle cx="12" cy="8" r="4"/><path d="M4.5 20.5a7.5 7.5 0 0 1 15 0"/>',
+  tower: '<path d="M7 21V6l5-3 5 3v15"/><path d="M4 21h16"/><rect x="9.5" y="8" width="2" height="2.5" rx=".5" fill="currentColor"/><rect x="12.5" y="8" width="2" height="2.5" rx=".5"/><rect x="9.5" y="13" width="2" height="2.5" rx=".5"/><rect x="12.5" y="13" width="2" height="2.5" rx=".5" fill="currentColor"/><path d="M11 21v-2.5h2V21"/>',
   grid: '<rect x="3.5" y="3.5" width="7" height="7" rx="1.5" fill="currentColor"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" fill="currentColor"/>',
 };
 

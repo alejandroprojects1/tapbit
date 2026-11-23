@@ -19,6 +19,7 @@ Roda no navegador do celular (em pé) ou do computador, sem instalar nada.
 | 3 | Invasão Hacker | o drone mostra o binário e o aluno escolhe entre 3 números |
 | 4 | Decifrador Secreto | chefes: binário → letra (A=1, B=2…) para formar SOL, PAZ, LUA… |
 | Bônus | Mundo dos Pixels | a tela é uma grade de pixels: cada linha tem um código de 0 e 1 (1 acende, 0 apaga); ao completar as linhas aparece uma imagem (coração, robô, foguete…). As 2 últimas fases dão a linha em decimal (colunas 16 8 4 2 1) |
+| Bônus | Mensagem na Torre | inspirado na atividade desplugada do CS Unplugged: o Bitinho, preso numa torre, acende 5 janelas (16 8 4 2 1) para mandar cada letra (A=1 … Z=26, tudo apagado = espaço). O aluno decifra a frase; a ajuda some aos poucos, entra um teclado completo e, na última fase, o aluno responde acendendo as janelas |
 
 - **Combo e Overdrive:** 3 acertos seguidos ativam o Overdrive (bordas douradas, som especial, pontos ×2).
 - **Pulso PEM:** a cada 5 acertos seguidos; limpa a tela numa emergência.
@@ -65,6 +66,7 @@ js/icons.js         ícones lineares da interface
 js/robot.js         robôs-avatar desenhados em canvas
 js/levels.js        os 4 setores, 20 fases, o Mundo dos Pixels e a Missão Relâmpago
 js/pixel.js         Mundo dos Pixels (grade de pixels e imagens secretas)
+js/tower.js         Mensagem na Torre (frases em binário com 5 janelas)
 js/missions.js      missões diárias
 js/shop.js          Oficina de Skins e estilos de laser
 js/game.js          motor do jogo (regras, Painel de Bits, combo, PEM e desenho 2D reserva)

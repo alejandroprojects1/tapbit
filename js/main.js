@@ -8,7 +8,7 @@ const UI = (() => {
   function show(id) {
     $('result').classList.add('hidden');
     document.querySelectorAll('.screen').forEach((s) => s.classList.toggle('active', s.id === id));
-    if (id !== 'game' && id !== 'pixel') Sound.startMusic('menu');
+    if (id !== 'game' && id !== 'pixel' && id !== 'tower') Sound.startMusic('menu');
     if (id === 'home') renderHome();
     if (id === 'map') renderMap();
     if (id === 'shop') Shop.render();
@@ -58,7 +58,7 @@ const UI = (() => {
     const box = $('sectors');
     box.innerHTML = '';
     // o Mundo dos Pixels (bônus, aberto desde o começo) aparece logo depois do Setor 1
-    const order = [SECTORS[0], SECTORS[4], SECTORS[1], SECTORS[2], SECTORS[3]].filter(Boolean);
+    const order = [SECTORS[0], SECTORS[4], SECTORS[5], SECTORS[1], SECTORS[2], SECTORS[3]].filter(Boolean);
     order.forEach((s) => {
       const open = isUnlocked(s.levels[0]);
       const got = s.levels.reduce((a, l) => a + (Store.data.stars[l.id] || 0), 0);
@@ -68,7 +68,7 @@ const UI = (() => {
       card.innerHTML = `
         <div class="sector-head">
           <span class="sector-ico">${icon(open ? s.icon : 'lock')}</span>
-          <div><small>${s.id === 5 ? 'MUNDO BÔNUS' : 'SETOR ' + s.id}${s.isNew ? ' <em class="new-tag">NOVO</em>' : ''}</small><b>${s.name}</b></div>
+          <div><small>${s.id >= 5 ? 'MUNDO BÔNUS' : 'SETOR ' + s.id}${s.isNew ? ' <em class="new-tag">NOVO</em>' : ''}</small><b>${s.name}</b></div>
           <span class="sector-stars"><i class="star"></i>${got}/${s.levels.length * 3}</span>
         </div>
         <p>${s.desc}</p>
@@ -108,6 +108,12 @@ const UI = (() => {
     $('result').classList.add('hidden');
     $('pause').classList.add('hidden');
     Pixel.stop();
+    Tower.stop();
+    if (l.kind === 'tower') {
+      show('tower');
+      requestAnimationFrame(() => Tower.start(l, finish));
+      return;
+    }
     if (l.kind === 'pixel') {
       show('pixel');
       requestAnimationFrame(() => Pixel.start(l, finish));
@@ -150,19 +156,24 @@ const UI = (() => {
     const ov = $('result');
     ov.classList.remove('hidden');
     const pct = Math.round(r.acc * 100);
-    $('res-title').textContent = isFlash ? 'Tempo esgotado!' : l.kind === 'pixel' ? `${l.image}!` : r.win ? (l.kind === 'letters' ? 'Chefe derrotado!' : 'Setor protegido!') : 'O escudo caiu!';
+    $('res-title').textContent = isFlash ? 'Tempo esgotado!' : l.kind === 'pixel' ? `${l.image}!` : l.kind === 'tower' ? 'Mensagem decifrada!' : r.win ? (l.kind === 'letters' ? 'Chefe derrotado!' : 'Setor protegido!') : 'O escudo caiu!';
     RobotView.set($('result-robot'), () => Store.data.equip.robot, r.win || isFlash ? 'cheer' : 'sad');
     const isPixel = l.kind === 'pixel';
     $('result-robot').classList.toggle('hidden', isPixel);
     $('res-thumb').classList.toggle('hidden', !isPixel);
     $('res-thumb').innerHTML = isPixel ? pixelThumb(l.art, 110) : '';
+    const msg = $('res-msg');
+    msg.classList.toggle('hidden', l.kind !== 'tower');
+    msg.textContent = l.kind === 'tower' ? `“${l.phrase}”` : '';
     const starsEl = $('res-stars');
     starsEl.classList.toggle('hidden', isFlash || !r.win);
     starsEl.querySelectorAll('i').forEach((s, i) => {
       s.className = '';
       if (i < stars) setTimeout(() => { s.className = 'on'; Sound.star(i); }, 350 + i * 300);
     });
-    const rows = l.kind === 'pixel'
+    const rows = l.kind === 'tower'
+      ? [['Precisão', pct + '%'], ['Letras', r.hits], ['Erros', r.errors], ['Pontos', r.score.toLocaleString('pt-BR')]]
+      : l.kind === 'pixel'
       ? [['Precisão', pct + '%'], ['Linhas', r.hits], ['Pixels errados', r.errors], ['Pontos', r.score.toLocaleString('pt-BR')]]
       : isFlash
       ? [['Pontos', r.score.toLocaleString('pt-BR')], ['Acertos', r.hits], ['Recorde', Store.data.bestFlash.toLocaleString('pt-BR') + (improved ? ' ★' : '')]]
@@ -182,6 +193,10 @@ const UI = (() => {
 
   function tipFor(r) {
     const l = r.level;
+    if (l.kind === 'tower') {
+      if (l.reply) return 'Você mandou uma mensagem só com luzes: é assim que os computadores conversam!';
+      return r.acc >= 0.85 ? 'Você decifrou a mensagem! Cada letra é um número em binário.' : 'Dica: some os valores das janelas acesas e procure o número na tabela (A=1).';
+    }
     if (l.kind === 'pixel') {
       if (r.acc >= 0.85) return l.decimal ? 'Você transformou números em pixels!' : 'Você formou uma imagem só com 0 e 1! É assim que a tela do computador funciona.';
       return 'Dica: olhe o código antes de tocar. Só acende onde tem 1.';
@@ -198,6 +213,7 @@ const UI = (() => {
   }
 
   // ---------- Mundo dos Pixels: voltar ao mapa ----------
+  $('tw-back').addEventListener('click', () => { Sound.click(); Tower.stop(); show('map'); });
   $('px-back').addEventListener('click', () => { Sound.click(); Pixel.stop(); show('map'); });
 
   // ---------- Pausa ----------

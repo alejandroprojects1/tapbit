@@ -615,3 +615,75 @@ kbd { display: none; }
   background: rgba(12,17,40,.92); border: 1px solid var(--border-2); border-left: 3px solid var(--orange); text-align: center; font-size: 15px; opacity: 0; transition: .25s; pointer-events: none; z-index: 30; }
 .px-toast.show { opacity: 1; transform: translate(-50%, 0); }
 .px-toast b { color: var(--amber); }
+
+/* ---------- Mensagem na Torre ---------- */
+#tower { gap: 8px; }
+.tw-scene { position: relative; height: 270px; flex: none; border-radius: var(--r-lg); overflow: hidden; border: 1px solid var(--border);
+  background: linear-gradient(180deg, #0b1033 0%, #1c1f5c 60%, #3b2a6e 100%); }
+.tw-moon { position: absolute; right: 26px; top: 20px; width: 44px; height: 44px; border-radius: 50%; background: radial-gradient(circle at 40% 40%, #fff8dc, #f5e6a8); box-shadow: 0 0 40px rgba(255,240,180,.5); }
+.tw-moon::after { content: ''; position: absolute; left: 10px; top: 14px; width: 8px; height: 8px; border-radius: 50%; background: rgba(200,180,120,.35); }
+.tw-stars { position: absolute; inset: 0; opacity: .8;
+  background-image: radial-gradient(1.2px 1.2px at 12% 18%, #fff, transparent), radial-gradient(1px 1px at 30% 8%, #fff, transparent), radial-gradient(1.4px 1.4px at 48% 22%, #fff, transparent),
+    radial-gradient(1px 1px at 66% 12%, #fff, transparent), radial-gradient(1.2px 1.2px at 80% 40%, #fff, transparent), radial-gradient(1px 1px at 8% 45%, #fff, transparent), radial-gradient(1px 1px at 90% 26%, #fff, transparent); }
+.tw-city { position: absolute; left: 0; right: 0; bottom: 0; height: 70px; display: flex; align-items: flex-end; justify-content: space-between; padding: 0 4px; }
+.tw-city i { width: 15%; background: #161a48; border-radius: 4px 4px 0 0; }
+.tw-city i:nth-child(1) { height: 48px; } .tw-city i:nth-child(2) { height: 64px; margin-right: 28%; } .tw-city i:nth-child(3) { height: 40px; } .tw-city i:nth-child(4) { height: 58px; } .tw-city i:nth-child(5) { height: 34px; }
+.tw-tower { position: absolute; left: 50%; bottom: 0; width: 230px; height: 196px; transform: translateX(-50%); background: linear-gradient(90deg, #2a2f78, #353b8f 50%, #262a6c);
+  border-radius: 14px 14px 0 0; box-shadow: 0 0 0 2px rgba(255,255,255,.06) inset, 0 -10px 40px rgba(0,0,0,.4); display: flex; flex-direction: column; align-items: center; padding-top: 12px; }
+.tw-tower::before { content: ''; position: absolute; left: -10px; right: -10px; top: -10px; height: 14px; border-radius: 8px; background: #40479f; }
+.tw-top { background: rgba(0,0,0,.25); border-radius: 12px; padding: 6px 8px 8px; }
+.tw-labels { display: flex; gap: 8px; justify-content: center; margin-bottom: 4px; }
+.tw-labels span { width: 34px; text-align: center; font: 700 12px var(--font); color: var(--amber); }
+.tw-windows { display: flex; gap: 8px; }
+.tw-win { width: 34px; height: 46px; border-radius: 8px 8px 4px 4px; border: 2px solid #12163f; background: #0d1030; padding: 0; position: relative; transition: background .2s, box-shadow .2s; }
+.tw-win::after { content: ''; position: absolute; left: 50%; top: 3px; bottom: 3px; width: 2px; margin-left: -1px; background: rgba(0,0,0,.25); }
+.tw-win.on { background: radial-gradient(circle at 50% 40%, #fffbe0, #fde68a 45%, #f59e0b); box-shadow: 0 0 18px rgba(253,230,138,.9), 0 0 40px rgba(245,158,11,.45); }
+.tw-win.flash { animation: winFlash .5s; }
+.tw-win.good.on { background: radial-gradient(circle at 50% 40%, #eafff4, #6ee7b7 50%, #10b981); box-shadow: 0 0 20px rgba(110,231,183,.9); }
+.tw-win.bad { animation: shake .35s; }
+@keyframes winFlash { 0% { filter: brightness(2.2); } 100% { filter: none; } }
+.tw-scene.reply .tw-win { cursor: pointer; border-color: rgba(62,224,255,.5); }
+.tw-scene.reply .tw-win:active { transform: scale(.92); }
+.tw-floors { margin-top: 12px; display: grid; grid-template-columns: repeat(6, 18px); gap: 10px 12px; }
+.tw-floors i { width: 18px; height: 16px; border-radius: 3px; background: #1a1e55; }
+.tw-floors i.on { background: rgba(253,230,138,.35); }
+.tw-door { position: absolute; bottom: 0; width: 34px; height: 30px; border-radius: 16px 16px 0 0; background: #191d52; }
+#tw-robot { position: absolute; top: -64px; left: 50%; margin-left: -35px; }
+.tw-scene.party .tw-tower::before { background: linear-gradient(90deg, #f472b6, #fbbf24, #34d399, #3ee0ff); }
+.tw-banner { position: absolute; left: 8px; right: 8px; top: 24px; text-align: center; font-size: 24px; font-weight: 800; color: #fff; opacity: 0; pointer-events: none; text-shadow: 0 3px 14px rgba(0,0,0,.8); }
+.tw-banner.show { animation: bannerIn 2.4s cubic-bezier(.2,.8,.2,1) forwards; }
+.tw-target { text-align: center; font-size: 17px; color: var(--muted); min-height: 0; }
+.tw-target b { font-size: 26px; color: var(--amber); margin-left: 4px; }
+.tw-phrase { display: flex; flex-wrap: wrap; justify-content: center; gap: 6px 4px; }
+.tw-phrase .word { display: flex; gap: 4px; width: auto; height: auto; background: none; border: 0; }
+.tw-phrase .word span, .tw-phrase > span.space { width: 26px; height: 34px; border-radius: 8px; display: grid; place-items: center; font-weight: 700; font-size: 18px; background: var(--surface); border: 1px solid var(--border); color: var(--faint); }
+.tw-phrase > span.space { background: transparent; border-color: transparent; width: 10px; }
+.tw-phrase > span.space.cur { border-color: var(--amber); border-style: dashed; width: 26px; background: transparent; }
+.tw-phrase .word span.ok { color: var(--green); border-color: rgba(52,211,153,.45); background: rgba(52,211,153,.08); }
+.tw-phrase .word span.cur { color: var(--amber); border-color: var(--amber); box-shadow: 0 0 0 3px rgba(251,191,36,.15); }
+.tw-table { display: grid; grid-template-columns: repeat(9, 1fr); gap: 3px; font-size: 11px; padding: 6px; border-radius: 12px; background: var(--surface); border: 1px solid var(--border); }
+.tw-table span { display: flex; justify-content: space-between; padding: 1px 4px; font-family: var(--mono); color: var(--muted); }
+.tw-table b { color: var(--text); }
+.tw-answers { margin-top: auto; }
+.tw-answers.options { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.tw-opt { height: 66px; font-size: 26px; }
+.tw-opt b { font-size: inherit; }
+.tw-answers.keyboard { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+.tw-key { height: 40px; border-radius: 10px; border: 1px solid var(--border-2); background: var(--surface-2); font-size: 17px; font-weight: 700; box-shadow: 0 3px 0 #060a1d; padding: 0; }
+.tw-key:active { transform: translateY(2px); box-shadow: 0 1px 0 #060a1d; }
+.tw-key.space { grid-column: span 2; font-size: 13px; }
+.tw-key.ok { background: linear-gradient(160deg, #6ee7b7, #10b981); color: #02251a; }
+.tw-key.bad { background: rgba(251,113,133,.12); color: var(--red); opacity: .6; }
+.tw-answers.reply { display: flex; flex-direction: column; gap: 10px; align-items: stretch; }
+.tw-sum { text-align: center; font: 600 18px var(--mono); color: var(--muted); }
+.tw-sum b { color: var(--amber); }
+.tw-toast { border-left-color: var(--orange); bottom: auto; top: calc(70px + var(--safe-t)); transform: translate(-50%, -20px); }
+.tw-toast.show { transform: translate(-50%, 0); }
+.tw-toast small { display: block; color: var(--muted); font-size: 13px; margin-top: 2px; }
+.res-msg { margin: -4px 0 0; font-size: 20px; font-weight: 700; color: var(--amber); letter-spacing: .02em; }
+@media (max-height: 700px) {
+  .tw-scene { height: 230px; }
+  .tw-tower { height: 180px; }
+  .tw-key { height: 36px; }
+  .tw-opt { height: 56px; }
+}
