@@ -30,6 +30,11 @@ Roda no navegador do celular (em pé) ou do computador, sem instalar nada.
 
 O progresso fica salvo no próprio aparelho (localStorage).
 
+### Cenário 3D
+O campo de batalha é desenhado em 3D com [Three.js](https://threejs.org) (copiado em `js/vendor/`, sem depender de outro site).
+O jogo mede a velocidade do aparelho: se ficar lento, baixa a resolução do 3D e, em último caso, troca sozinho para o desenho 2D.
+Para forçar o modo 2D, abra o jogo com `?2d` no fim do endereço.
+
 ## Publicar (GitHub Pages)
 1. No GitHub, abra **Settings → Pages**.
 2. Em **Build and deployment**, escolha **Deploy from a branch**, branch `main`, pasta **/ (root)** e clique em **Save**.
@@ -59,7 +64,9 @@ js/robot.js         robôs-avatar desenhados em canvas
 js/levels.js        os 4 setores, 20 fases e a Missão Relâmpago
 js/missions.js      missões diárias
 js/shop.js          Oficina de Skins e estilos de laser
-js/game.js          motor do jogo (canvas, Painel de Bits, combo, PEM)
+js/game.js          motor do jogo (regras, Painel de Bits, combo, PEM e desenho 2D reserva)
+js/scene3d.js       cenário 3D (Three.js) e qualidade automática
+js/vendor/          Three.js (licença MIT)
 js/sala.js          Ranking da Sala (Supabase) e QR Code
 js/tutorial.js      tutorial de 15 segundos
 js/main.js          menus e fluxo entre telas
