@@ -411,6 +411,11 @@ const Sound = (() => {
     want = style;
     if (ctx) { stopTimer(); begin(); }
   }
+  // tom das notas dos bits sem tocar música (durante as partidas só há efeitos sonoros)
+  function setKey(style) {
+    const m = MOODS[style] || MOODS.calm;
+    keyRoot = m.root; keyMinor = m.minor;
+  }
   function stopTimer() { if (timer) clearInterval(timer); timer = null; }
   function stopMusic() { want = null; moodName = ''; stopTimer(); }
   function setOverdrive(on) { hype = !!on; }
@@ -424,7 +429,7 @@ const Sound = (() => {
     if (document.hidden) ctx.suspend(); else ctx.resume();
   });
 
-  return Object.assign(fx, { apply, startMusic, stopMusic, setOverdrive, setTension, ensure, setTempo() {} });
+  return Object.assign(fx, { apply, startMusic, stopMusic, setKey, setOverdrive, setTension, ensure, setTempo() {} });
 })();
 
 // Vibração curta (haptic feedback), quando o aparelho permite.

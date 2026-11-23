@@ -203,7 +203,9 @@ const Game = (() => {
     if (L.rule) banner(L.rule.name, 'gold');
     else banner(L.name);
     if (L.rule) setTimeout(() => { if (st && !st.ended) toast(L.rule.hint, '', 'info'); }, 900);
-    Sound.startMusic(musicStyle());
+    // durante a partida não há música, só efeitos; as notas dos bits seguem o clima do setor
+    Sound.stopMusic();
+    Sound.setKey(musicStyle());
     cancelAnimationFrame(raf);
     last = performance.now();
     raf = requestAnimationFrame(frame);
@@ -221,8 +223,7 @@ const Game = (() => {
   function pause(on) {
     if (!st || st.ended) return;
     st.paused = on;
-    if (on) Sound.stopMusic();
-    else { Sound.startMusic(musicStyle()); Sound.setOverdrive(st.overdrive); last = performance.now(); }
+    if (!on) last = performance.now();
   }
 
   const alive = () => st.threats.filter((t) => !t.dead);

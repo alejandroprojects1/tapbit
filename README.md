@@ -19,7 +19,7 @@ Roda no navegador do celular (em pé) ou do computador, sem instalar nada.
 | 3 | Invasão Hacker | o drone mostra o binário e o aluno escolhe entre 3 números |
 | 4 | Decifrador Secreto | chefes: binário → letra (A=1, B=2…) para formar SOL, PAZ, LUA… |
 
-- **Combo e Overdrive:** 3 acertos seguidos ativam o Overdrive (bordas douradas, música mais rápida, pontos ×2).
+- **Combo e Overdrive:** 3 acertos seguidos ativam o Overdrive (bordas douradas, som especial, pontos ×2).
 - **Pulso PEM:** a cada 5 acertos seguidos; limpa a tela numa emergência.
 - **Estrelas** (até 3) pela **precisão**: erros e liga-desliga de bits à toa contam.
 - **Byte-Coins** para a **Oficina de Skins**: robôs, cores de laser e temas dos botões.
@@ -59,7 +59,7 @@ Sem o SQL, o jogo funciona normalmente e a tela da Sala avisa que o ranking aind
 index.html          todas as telas
 css/style.css       visual (moderno e limpo) e temas dos botões
 js/store.js         progresso salvo no aparelho
-js/audio.js         efeitos e música chiptune (Web Audio)
+js/audio.js         efeitos sonoros e música dos menus (Web Audio)
 js/icons.js         ícones lineares da interface
 js/robot.js         robôs-avatar desenhados em canvas
 js/levels.js        os 4 setores, 20 fases e a Missão Relâmpago

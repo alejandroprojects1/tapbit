@@ -31,7 +31,7 @@ Vírus chamados **Glitches** mandam asteroides de dados corrompidos. O aluno é 
 As alternativas erradas do Setor 3 imitam erros comuns: ler o código de trás para frente ou trocar um bit.
 
 ## 5. Gamificação
-- **Overdrive:** 3 acertos seguidos → bordas douradas, música acelera, pontos ×2.
+- **Overdrive:** 3 acertos seguidos → bordas douradas, som especial, pontos ×2.
 - **Pulso PEM:** a cada 5 acertos seguidos (máx. 3), limpa a tela.
 - **Estrelas (até 3) por precisão:** acertos ÷ tentativas; nas fases de montar, toques desnecessários também pesam.
 - **Byte-Coins** → **Oficina de Skins:** robôs (Bitinho, Volt, Pixel, Nébula, Brasa, Glitchy),
@@ -43,7 +43,7 @@ As alternativas erradas do Setor 3 imitam erros comuns: ler o código de trás p
 ## 6. Arte, UX e áudio
 - Cyber-Cartum: formas arredondadas, contorno escuro grosso, neon ciano/verde, rosa dos Glitches, dourado das recompensas.
 - Tutorial de 15 s só com mão animada, setas e números.
-- Música chiptune gerada no navegador; acelera por setor e no Overdrive.
+- Música suave gerada no navegador só nos menus; durante as partidas, apenas efeitos sonoros (cada bit é uma nota da escala pentatônica, no clima de cada setor).
 - Cada bit toca uma nota da pentatônica (1=Dó, 2=Ré, 4=Mi, 8=Sol, 16=Lá).
 
 ## 7. Técnica
