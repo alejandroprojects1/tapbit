@@ -731,7 +731,7 @@ const Game = (() => {
     if (Scene3D.active) {
       ctx.clearRect(0, 0, W, H);
       Scene3D.render({ st, L, T, pos, ground, cannonPos, bossX, shieldY });
-      drawRobot(ctx, W / 2 - 60, ground() - 22, 44, Store.data.equip.robot, T, st.robotMood);
+      drawRobot(ctx, W / 2 - 64, ground() - 30, 54, Store.data.equip.robot, T, st.robotMood);
       st.floats.forEach((f) => {
         ctx.globalAlpha = Math.max(0, f.life);
         numberText(f.text, f.x, f.y, 18, f.c);
@@ -749,7 +749,7 @@ const Game = (() => {
     if (L.kind === 'letters') drawBoss();
     st.beams.forEach(drawBeamFx);
     drawCannon();
-    drawRobot(ctx, W / 2 - 60, ground() - 22, 44, Store.data.equip.robot, T, st.robotMood);
+    drawRobot(ctx, W / 2 - 64, ground() - 30, 54, Store.data.equip.robot, T, st.robotMood);
     st.parts.forEach((p) => {
       ctx.globalAlpha = Math.max(0, Math.min(1, p.life * 2));
       ctx.fillStyle = p.c;
