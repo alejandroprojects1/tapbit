@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+  <meta name="theme-color" content="#0b1026">
+  <meta name="description" content="TapBit: A Academia dos Guardiões Digitais. Ligue os bits 16, 8, 4, 2 e 1 e proteja a Cidade de Silício!">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <title>TapBit</title>
+  <link rel="icon" type="image/svg+xml" href="assets/icon.svg">
+  <link rel="apple-touch-icon" href="assets/icon-512.png">
+  <link rel="manifest" href="manifest.json">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=JetBrains+Mono:wght@700;800&family=Press+Start+2P&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="theme-neon">
+  <div id="app">
+
+    <!-- ============ INÍCIO ============ -->
+    <section id="home" class="screen active">
+      <div class="sky" aria-hidden="true"></div>
+      <header class="topbar">
+        <span class="chip" title="Byte-Coins"><i class="coin"></i><b id="home-coins">0</b></span>
+        <span class="chip" title="Estrelas"><i class="star"></i><b id="home-stars">0</b></span>
+        <span class="chip" title="Ofensiva diária"><i class="flame"></i><b id="home-streak">0</b></span>
+        <button class="icon-btn" id="btn-settings" aria-label="Configurações">
+          <svg viewBox="0 0 24 24"><path d="M19.4 13a7.6 7.6 0 0 0 0-2l2.1-1.6-2-3.5-2.5 1a7.4 7.4 0 0 0-1.7-1L15 3.3h-4l-.4 2.6a7.4 7.4 0 0 0-1.7 1l-2.5-1-2 3.5L6.6 11a7.6 7.6 0 0 0 0 2l-2.1 1.6 2 3.5 2.5-1a7.4 7.4 0 0 0 1.7 1l.4 2.6h4l.4-2.6a7.4 7.4 0 0 0 1.7-1l2.5 1 2-3.5zM12 15.5a3.5 3.5 0 1 1 0-7 3.5 3.5 0 0 1 0 7z"/></svg>
+        </button>
+      </header>
+
+      <div class="hero">
+        <canvas class="robot-cv" id="home-robot" width="180" height="180" aria-hidden="true"></canvas>
+        <h1 class="logo"><span class="lg-tap">Tap</span><span class="lg-bit">Bit</span></h1>
+        <p class="tagline">A Academia dos Guardiões Digitais</p>
+        <div class="logo-bits" aria-hidden="true"><span>1</span><span>0</span><span>1</span><span>1</span><span>0</span></div>
+      </div>
+
+      <nav class="menu">
+        <button class="big-btn primary" id="btn-play"><span class="em">▶</span> JOGAR</button>
+        <button class="big-btn flash" id="btn-flash"><span class="em">⚡</span> Missão Relâmpago</button>
+        <div class="menu-row">
+          <button class="mid-btn" id="btn-shop"><span class="em">🛠️</span>Oficina</button>
+          <button class="mid-btn" id="btn-missions"><span class="em">🎯</span>Missões<i class="dot hidden" id="missions-dot"></i></button>
+          <button class="mid-btn" id="btn-class"><span class="em">🏆</span>Sala</button>
+        </div>
+        <button class="link-btn" id="btn-howto">❓ Como jogar</button>
+      </nav>
+    </section>
+
+    <!-- ============ MAPA DOS SETORES ============ -->
+    <section id="map" class="screen">
+      <header class="bar">
+        <button class="icon-btn back" data-go="home" aria-label="Voltar">‹</button>
+        <h2>Setores</h2>
+        <span class="chip"><i class="coin"></i><b class="coins-view">0</b></span>
+      </header>
+      <div class="mode-switch" role="radiogroup" aria-label="Modo de disparo">
+        <button data-mode="iniciante" role="radio">⚡ Iniciante<small>dispara sozinho</small></button>
+        <button data-mode="desafio" role="radio">🎯 Desafio<small>botão DISPARAR</small></button>
+      </div>
+      <div class="sectors" id="sectors"></div>
+    </section>
+
+    <!-- ============ JOGO ============ -->
+    <section id="game" class="screen">
+      <header class="hud">
+        <button class="icon-btn" id="btn-pause" aria-label="Pausar">
+          <svg viewBox="0 0 24 24"><path d="M7 5h3.5v14H7zm6.5 0H17v14h-3.5z"/></svg>
+        </button>
+        <div class="hud-mid">
+          <div class="hud-title" id="hud-title">Setor 1</div>
+          <div class="hud-prog"><div class="hud-prog-fill" id="hud-prog-fill"></div><span id="hud-prog">0/0</span></div>
+        </div>
+        <div class="hud-right">
+          <div class="hud-score" id="hud-score">0</div>
+          <div class="hud-shield" id="hud-shield" aria-label="Escudo"></div>
+        </div>
+      </header>
+
+      <div class="combo-bar">
+        <div class="pips" id="pips" aria-label="Combo"><i></i><i></i><i></i></div>
+        <span class="combo-label" id="combo-label">COMBO</span>
+        <span class="od-label" id="od-label">OVERDRIVE ×2</span>
+      </div>
+
+      <div class="field" id="field">
+        <canvas id="play"></canvas>
+        <div class="abc hidden" id="abc" aria-label="Tabela de letras"></div>
+        <div class="banner" id="banner"></div>
+        <div class="toast" id="toast" role="status" aria-live="polite"></div>
+      </div>
+
+      <div class="controls" id="controls">
+        <div class="word hidden" id="word"></div>
+        <div class="readout" id="readout">
+          <div class="bin" id="bin"></div>
+          <div class="sum" id="sum">= 0</div>
+        </div>
+        <div class="bits" id="bits"></div>
+        <div class="options hidden" id="options"></div>
+        <div class="actions">
+          <button class="act-btn emp" id="btn-emp" aria-label="Pulso PEM" disabled><span>💥</span><b>PEM</b><i id="emp-count">0</i></button>
+          <button class="fire-btn hidden" id="btn-fire">DISPARAR</button>
+          <button class="act-btn clear" id="btn-clear" aria-label="Zerar bits"><span>↺</span><b>ZERAR</b></button>
+        </div>
+      </div>
+
+      <!-- Pausa -->
+      <div class="overlay hidden" id="pause">
+        <div class="card">
+          <h3>Pausa</h3>
+          <button class="big-btn primary" id="btn-resume">▶ Continuar</button>
+          <button class="big-btn" id="btn-restart">↺ Recomeçar</button>
+          <button class="big-btn ghost" id="btn-quit">Sair</button>
+        </div>
+      </div>
+
+      <!-- Resultado -->
+      <div class="overlay hidden" id="result">
+        <div class="card result-card">
+          <canvas class="robot-cv" id="result-robot" width="120" height="120" aria-hidden="true"></canvas>
+          <h3 id="res-title">Setor limpo!</h3>
+          <div class="res-stars" id="res-stars"><i></i><i></i><i></i></div>
+          <div class="res-stats" id="res-stats"></div>
+          <div class="res-coins" id="res-coins"></div>
+          <p class="res-tip" id="res-tip"></p>
+          <div class="res-actions">
+            <button class="big-btn primary" id="btn-next">Próxima ▶</button>
+            <button class="big-btn" id="btn-again">↺ Jogar de novo</button>
+            <button class="big-btn ghost" id="btn-tomap">Voltar</button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============ OFICINA ============ -->
+    <section id="shop" class="screen">
+      <header class="bar">
+        <button class="icon-btn back" data-go="home" aria-label="Voltar">‹</button>
+        <h2>Oficina de Skins</h2>
+        <span class="chip"><i class="coin"></i><b class="coins-view">0</b></span>
+      </header>
+      <div class="shop-preview">
+        <canvas class="robot-cv" id="shop-robot" width="140" height="140" aria-hidden="true"></canvas>
+      </div>
+      <div class="tabs" role="tablist">
+        <button class="tab active" data-tab="robot">🤖 Robôs</button>
+        <button class="tab" data-tab="laser">🔫 Lasers</button>
+        <button class="tab" data-tab="theme">🎛️ Botões</button>
+      </div>
+      <div class="shop-grid" id="shop-grid"></div>
+    </section>
+
+    <!-- ============ MISSÕES ============ -->
+    <section id="missions" class="screen">
+      <header class="bar">
+        <button class="icon-btn back" data-go="home" aria-label="Voltar">‹</button>
+        <h2>Missões</h2>
+        <span class="chip"><i class="coin"></i><b class="coins-view">0</b></span>
+      </header>
+      <div class="streak-card">
+        <div class="flame-big">🔥</div>
+        <div>
+          <b id="streak-days">0 dias</b>
+          <small>de ofensiva. Jogue todo dia para manter o fogo aceso!</small>
+        </div>
+      </div>
+      <div class="week" id="week"></div>
+      <h4 class="sub">Missões de hoje</h4>
+      <div class="mission-list" id="mission-list"></div>
+      <div class="flash-card">
+        <div>
+          <b>⚡ Missão Relâmpago</b>
+          <small id="flash-rule">1 minuto</small>
+          <small id="flash-best">Recorde: 0</small>
+        </div>
+        <button class="big-btn flash small" id="btn-flash2">Jogar</button>
+      </div>
+    </section>
+
+    <!-- ============ SALA (RANKING) ============ -->
+    <section id="class" class="screen">
+      <header class="bar">
+        <button class="icon-btn back" data-go="home" aria-label="Voltar">‹</button>
+        <h2>Ranking da Sala</h2>
+        <span></span>
+      </header>
+      <div class="class-body" id="class-body"></div>
+    </section>
+
+    <!-- ============ CONFIGURAÇÕES ============ -->
+    <div class="overlay hidden" id="settings">
+      <div class="card">
+        <h3>Configurações</h3>
+        <label class="row"><span>🔊 Efeitos sonoros</span><input type="checkbox" id="set-sound"></label>
+        <label class="row"><span>🎵 Música</span><input type="checkbox" id="set-music"></label>
+        <label class="row"><span>📳 Vibração</span><input type="checkbox" id="set-vibe"></label>
+        <label class="row"><span>🔓 Liberar todas as fases<small>para professores</small></span><input type="checkbox" id="set-unlock"></label>
+        <button class="big-btn ghost danger" id="btn-reset">Apagar progresso</button>
+        <button class="big-btn primary" id="btn-close-settings">OK</button>
+      </div>
+    </div>
+
+    <!-- ============ TUTORIAL (15 s, só setas e ícones) ============ -->
+    <div class="overlay tutorial hidden" id="tutorial">
+      <div class="tut-stage">
+        <div class="tut-meteor"><span id="tut-target">13</span></div>
+        <div class="tut-beam" id="tut-beam"></div>
+        <div class="tut-sum" id="tut-sum">0</div>
+        <div class="tut-bits" id="tut-bits">
+          <div class="tbit" data-v="8"><small>8</small><b>0</b></div>
+          <div class="tbit" data-v="4"><small>4</small><b>0</b></div>
+          <div class="tbit" data-v="2"><small>2</small><b>0</b></div>
+          <div class="tbit" data-v="1"><small>1</small><b>0</b></div>
+        </div>
+        <div class="tut-hand" id="tut-hand">👆</div>
+        <div class="tut-arrow" id="tut-arrow">⬇</div>
+      </div>
+      <div class="tut-eq" id="tut-eq">&nbsp;</div>
+      <div class="tut-bar"><i id="tut-progress"></i></div>
+      <button class="big-btn primary" id="btn-tut-go">Pular ▶</button>
+    </div>
+
+    <div class="coin-pop" id="coin-pop"></div>
+  </div>
+
+  <script src="js/config.js"></script>
+  <script src="js/store.js"></script>
+  <script src="js/audio.js"></script>
+  <script src="js/robot.js"></script>
+  <script src="js/levels.js"></script>
+  <script src="js/missions.js"></script>
+  <script src="js/shop.js"></script>
+  <script src="js/game.js"></script>
+  <script src="js/sala.js"></script>
+  <script src="js/tutorial.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>
