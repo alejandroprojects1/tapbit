@@ -63,7 +63,7 @@ const UI = (() => {
       card.style.setProperty('--sc', s.color);
       card.innerHTML = `
         <div class="sector-head">
-          <span class="sector-ico">${open ? s.icon : '🔒'}</span>
+          <span class="sector-ico">${icon(open ? s.icon : 'lock')}</span>
           <div><small>SETOR ${s.id}</small><b>${s.name}</b></div>
           <span class="sector-stars"><i class="star"></i>${got}/${s.levels.length * 3}</span>
         </div>
@@ -75,7 +75,7 @@ const UI = (() => {
         const un = isUnlocked(l);
         const stars = Store.data.stars[l.id] || 0;
         b.className = 'node' + (un ? '' : ' locked') + (stars ? ' done' : '') + (s.id === 4 ? ' boss' : '');
-        b.innerHTML = `<b>${un ? (s.id === 4 ? '👾' : i + 1) : '🔒'}</b><span class="mini-stars">${[0, 1, 2].map((k) => `<i class="${k < stars ? 'on' : ''}"></i>`).join('')}</span>`;
+        b.innerHTML = `<b>${un ? (s.id === 4 ? icon('bug') : i + 1) : icon('lock')}</b><span class="mini-stars">${[0, 1, 2].map((k) => `<i class="${k < stars ? 'on' : ''}"></i>`).join('')}</span>`;
         b.title = l.name;
         b.setAttribute('aria-label', `Fase ${l.id}: ${l.name}${un ? '' : ' (bloqueada)'}`);
         if (un) b.addEventListener('click', () => { Sound.click(); startLevel(l); });
@@ -139,7 +139,7 @@ const UI = (() => {
     const ov = $('result');
     ov.classList.remove('hidden');
     const pct = Math.round(r.acc * 100);
-    $('res-title').textContent = isFlash ? '⚡ Tempo esgotado!' : r.win ? (l.kind === 'letters' ? 'Chefe derrotado!' : 'Setor protegido!') : 'O escudo caiu!';
+    $('res-title').textContent = isFlash ? 'Tempo esgotado!' : r.win ? (l.kind === 'letters' ? 'Chefe derrotado!' : 'Setor protegido!') : 'O escudo caiu!';
     RobotView.set($('result-robot'), () => Store.data.equip.robot, r.win || isFlash ? 'cheer' : 'sad');
     const starsEl = $('res-stars');
     starsEl.classList.toggle('hidden', isFlash || !r.win);
@@ -148,7 +148,7 @@ const UI = (() => {
       if (i < stars) setTimeout(() => { s.className = 'on'; Sound.star(i); }, 350 + i * 300);
     });
     const rows = isFlash
-      ? [['Pontos', r.score.toLocaleString('pt-BR')], ['Acertos', r.hits], ['Recorde', Store.data.bestFlash.toLocaleString('pt-BR') + (improved ? ' 🆕' : '')]]
+      ? [['Pontos', r.score.toLocaleString('pt-BR')], ['Acertos', r.hits], ['Recorde', Store.data.bestFlash.toLocaleString('pt-BR') + (improved ? ' ★' : '')]]
       : [['Precisão', pct + '%'], ['Acertos', r.hits], ['Erros', r.errors + r.misses], ['Maior combo', r.best], ['Pontos', r.score.toLocaleString('pt-BR')]];
     $('res-stats').innerHTML = rows.map(([k, v]) => `<div><small>${k}</small><b>${v}</b></div>`).join('');
     $('res-coins').innerHTML = coins ? `<i class="coin"></i>+${coins} Byte-Coins` : '';
@@ -165,7 +165,7 @@ const UI = (() => {
 
   function tipFor(r) {
     const l = r.level;
-    if (l.id === 'flash') return Store.data.profile ? `Sua pontuação foi para a sala ${Store.data.profile.sala}.` : 'Entre numa sala (🏆) para aparecer no ranking da turma!';
+    if (l.id === 'flash') return Store.data.profile ? `Sua pontuação foi para a sala ${Store.data.profile.sala}.` : 'Entre numa sala para aparecer no ranking da turma!';
     if (!r.win) {
       if (l.kind === 'decode') return 'Dica: some só os valores dos bits que estão em 1.';
       if (l.kind === 'letters') return 'Dica: transforme o código em número e procure na tabela (A=1).';
@@ -197,7 +197,7 @@ const UI = (() => {
       const [y, m, d] = key.split('-').map(Number);
       const day = new Date(y, m - 1, d).getDay();
       const on = Store.data.days.includes(key);
-      week.insertAdjacentHTML('beforeend', `<div class="day ${on ? 'on' : ''} ${i === 0 ? 'today' : ''}"><small>${names[day]}</small><span>${on ? '🔥' : '·'}</span></div>`);
+      week.insertAdjacentHTML('beforeend', `<div class="day ${on ? 'on' : ''} ${i === 0 ? 'today' : ''}"><small>${names[day]}</small><i class="d-dot"></i></div>`);
     }
     const list = $('mission-list');
     list.innerHTML = '';
@@ -206,9 +206,9 @@ const UI = (() => {
       const el = document.createElement('div');
       el.className = 'mission' + (done ? ' done' : '') + (m.claimed ? ' claimed' : '');
       el.innerHTML = `
-        <div class="m-text"><b>${m.text}</b><small>💡 ${m.hint}</small>
+        <div class="m-text"><b>${m.text}</b><small>${m.hint}</small>
           <div class="m-bar"><i style="width:${100 * m.progress / m.goal}%"></i><span>${m.progress}/${m.goal}</span></div></div>
-        <button class="m-btn" ${done && !m.claimed ? '' : 'disabled'}>${m.claimed ? '✔' : `<i class="coin"></i>${m.reward}`}</button>`;
+        <button class="m-btn" ${done && !m.claimed ? '' : 'disabled'}>${m.claimed ? icon('check') : `<i class="coin"></i>${m.reward}`}</button>`;
       el.querySelector('.m-btn').addEventListener('click', () => {
         const got = Missions.claim(m.id);
         if (got) { Sound.coin(); coinPop(got); renderMissions(); refreshCoins(); }
@@ -226,7 +226,7 @@ const UI = (() => {
       setTimeout(() => {
         const t = $('toast');
         t.className = 'toast show good';
-        t.innerHTML = `<div>🎯 Missão cumprida!</div><small>${def.text}</small>`;
+        t.innerHTML = `<div>Missão cumprida!</div><small>${def.text}</small>`;
         setTimeout(() => { t.className = 'toast'; }, 2200);
       }, 700);
     }

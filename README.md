@@ -51,9 +51,10 @@ Sem o SQL, o jogo funciona normalmente e a tela da Sala avisa que o ranking aind
 ## Estrutura
 ```
 index.html          todas as telas
-css/style.css       visual (Cyber-Cartum) e temas dos botões
+css/style.css       visual (moderno e limpo) e temas dos botões
 js/store.js         progresso salvo no aparelho
 js/audio.js         efeitos e música chiptune (Web Audio)
+js/icons.js         ícones lineares da interface
 js/robot.js         robôs-avatar desenhados em canvas
 js/levels.js        os 4 setores, 20 fases e a Missão Relâmpago
 js/missions.js      missões diárias

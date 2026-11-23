@@ -57,7 +57,7 @@ const Shop = (() => {
       card.appendChild(info);
       const btn = document.createElement('button');
       btn.className = 'item-btn';
-      if (eq) { btn.textContent = '✔ Usando'; btn.disabled = true; }
+      if (eq) { btn.innerHTML = icon('check') + ' Usando'; btn.disabled = true; }
       else if (has) { btn.textContent = 'Usar'; }
       else {
         btn.innerHTML = `<i class="coin"></i>${it.price}`;
@@ -132,7 +132,7 @@ function drawBeam(c, style, x1, y1, x2, y2, t, alpha = 1) {
   c.lineCap = 'round';
   if (style === 'pixel') {
     const step = 9;
-    const cols = ['#3dff9e', '#ffd23f', '#22e6ff'];
+    const cols = ['#3dff9e', '#ffd23f', '#3ee0ff'];
     for (let d = 0, i = 0; d < len; d += step, i++) {
       const x = x1 + dx * d / len, y = y1 + dy * d / len;
       c.fillStyle = cols[(i + Math.floor(t * 12)) % 3];
@@ -165,7 +165,7 @@ function drawBeam(c, style, x1, y1, x2, y2, t, alpha = 1) {
   } else {
     c.beginPath(); c.moveTo(x1, y1); c.lineTo(x2, y2);
     c.strokeStyle = 'rgba(34,230,255,.35)'; c.lineWidth = 14; c.stroke();
-    c.strokeStyle = '#22e6ff'; c.lineWidth = 6; c.stroke();
+    c.strokeStyle = '#3ee0ff'; c.lineWidth = 6; c.stroke();
     c.strokeStyle = '#ffffff'; c.lineWidth = 2.5; c.stroke();
   }
   c.restore();

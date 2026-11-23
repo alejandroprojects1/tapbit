@@ -49,7 +49,7 @@ const Tutorial = (() => {
       target.textContent = value;
       meteor.className = 'tut-meteor in';
       arrow.className = 'tut-arrow show';
-      eq.innerHTML = '🎯 ' + value;
+      eq.innerHTML = 'Alvo: <b>' + value + '</b>';
     });
     let acc = [];
     seq.forEach((v, i) => {
@@ -74,7 +74,7 @@ const Tutorial = (() => {
     timers.forEach(clearTimeout);
     timers = [];
     ov.classList.remove('hidden');
-    btn.textContent = 'Pular ▶';
+    btn.textContent = 'Pular';
     bar.style.transition = 'none';
     bar.style.width = '0%';
     void bar.offsetWidth;
@@ -89,7 +89,7 @@ const Tutorial = (() => {
       eq.innerHTML = '<span class="bin-eq">01101</span> = 8 + 4 + 1 = <b>13</b>';
       meteor.className = 'tut-meteor';
     });
-    later(15000, () => { btn.textContent = 'Vamos lá! ▶'; btn.classList.add('pulse'); });
+    later(15000, () => { btn.textContent = 'Vamos lá!'; btn.classList.add('pulse'); });
   }
 
   function close() {

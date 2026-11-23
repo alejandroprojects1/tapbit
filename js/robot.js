@@ -1,6 +1,6 @@
 // Robôs-avatar do Guardião Digital, desenhados em canvas (o mesmo desenho no menu, na loja e no jogo).
 const ROBOTS = {
-  bitinho: { name: 'Bitinho', price: 0, body: '#22e6ff', dark: '#0a86a6', visor: '#0b1026', eye: '#3dff9e', antenna: 'ball', head: 'round' },
+  bitinho: { name: 'Bitinho', price: 0, body: '#3ee0ff', dark: '#1b8fb3', visor: '#0a1230', eye: '#6ef7c8', antenna: 'ball', head: 'round' },
   volt:    { name: 'Volt', price: 60, body: '#ffd23f', dark: '#c48a00', visor: '#1a1033', eye: '#ff4fd8', antenna: 'bolt', head: 'square' },
   pixel:   { name: 'Pixel', price: 90, body: '#3dff9e', dark: '#139a5c', visor: '#062318', eye: '#ffffff', antenna: 'double', head: 'square' },
   nebula:  { name: 'Nébula', price: 120, body: '#a78bfa', dark: '#5b3fc4', visor: '#120a2e', eye: '#22e6ff', antenna: 'ring', head: 'round' },
@@ -8,7 +8,7 @@ const ROBOTS = {
   glitchy: { name: 'Glitchy', price: 220, body: '#ff4fd8', dark: '#a3168a', visor: '#1b0420', eye: '#ffd23f', antenna: 'horns', head: 'tv' },
 };
 
-const OUTLINE = '#0b1026';
+const OUTLINE = 'rgba(7,11,26,.6)';
 
 function rrect(c, x, y, w, h, r) {
   r = Math.min(r, w / 2, h / 2);
@@ -24,7 +24,7 @@ function rrect(c, x, y, w, h, r) {
 // (x, y) = centro do robô; s = altura total; t = tempo em segundos (piscar, balançar)
 function drawRobot(c, x, y, s, skin, t = 0, mood = 'happy') {
   const R = typeof skin === 'string' ? (ROBOTS[skin] || ROBOTS.bitinho) : skin;
-  const lw = Math.max(2, s * 0.035);
+  const lw = Math.max(1.2, s * 0.022);
   const bob = Math.sin(t * 3) * s * 0.02;
   c.save();
   c.translate(x, y + bob);

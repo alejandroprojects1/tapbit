@@ -3,7 +3,7 @@ const range = (a, b) => Array.from({ length: b - a + 1 }, (_, i) => a + i);
 
 const SECTORS = [
   {
-    id: 1, name: 'Laboratório de Energia', icon: '🔬', color: '#3dff9e',
+    id: 1, name: 'Laboratório de Energia', icon: 'flask', color: '#34d399',
     desc: 'Sem tempo! Monte de 1 a 15 com 4 bits. A soma aparece ao vivo.',
     levels: [
       { name: 'Primeiros bits', pool: [1, 2, 3], count: 5 },
@@ -14,7 +14,7 @@ const SECTORS = [
     ].map((l) => Object.assign(l, { kind: 'build', bits: 4, showSum: true, fall: 0, max: 1 })),
   },
   {
-    id: 2, name: 'Chuva de Meteoros', icon: '☄️', color: '#22e6ff',
+    id: 2, name: 'Chuva de Meteoros', icon: 'comet', color: '#3ee0ff',
     desc: 'O bit 16 chegou! Números de 1 a 31 caindo. A soma fica escondida.',
     levels: [
       { name: 'O bit 16', pool: range(16, 31), count: 6, fall: 24, max: 1, every: 3 },
@@ -25,7 +25,7 @@ const SECTORS = [
     ].map((l) => Object.assign(l, { kind: 'build', bits: 5, showSum: false, shield: 3 })),
   },
   {
-    id: 3, name: 'Invasão Hacker', icon: '👾', color: '#ff4fd8',
+    id: 3, name: 'Invasão Hacker', icon: 'bug', color: '#a78bfa',
     desc: 'Ao contrário! O drone mostra o código binário e você escolhe o número.',
     levels: [
       { name: 'Código de 3 bits', bits: 3, labels: true, count: 6, fall: 22 },
@@ -36,7 +36,7 @@ const SECTORS = [
     ].map((l) => Object.assign(l, { kind: 'decode', pool: range(1, Math.pow(2, l.bits) - 1), shield: 3, max: 1 })),
   },
   {
-    id: 4, name: 'Decifrador Secreto', icon: '🔐', color: '#ffd23f',
+    id: 4, name: 'Decifrador Secreto', icon: 'key', color: '#fbbf24',
     desc: 'Chefes! Traduza o binário em letras (A=1, B=2…) e forme palavras.',
     levels: [
       { name: 'Glitch Junior', words: ['SOL', 'PAZ', 'LUA'], charge: 28 },

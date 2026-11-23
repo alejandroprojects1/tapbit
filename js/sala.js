@@ -38,7 +38,7 @@ const Sala = (() => {
 
   function render() {
     if (!ready()) {
-      body.innerHTML = '<div class="panel"><p>🏆 O ranking da sala está desligado neste jogo.</p><p class="muted">Professor(a): veja como ligar no arquivo README do TapBit.</p></div>';
+      body.innerHTML = '<div class="panel"><p>O ranking da sala está desligado neste jogo.</p><p class="muted">Professor(a): veja como ligar no arquivo README do TapBit.</p></div>';
       return;
     }
     const p = Store.data.profile;
@@ -83,9 +83,9 @@ const Sala = (() => {
     box.className = 'panel';
     box.innerHTML = `
       <div class="room-head"><div><small>Sala</small><b>${esc(p.salaNome)}</b></div><span class="code-tag">${esc(p.sala)}</span></div>
-      <p class="muted small">Jogando como <b>${esc(p.nome)}</b> · Top 5 de hoje na ⚡ Missão Relâmpago</p>
+      <p class="muted small">Jogando como <b>${esc(p.nome)}</b> · Top 5 de hoje na Missão Relâmpago</p>
       <ol class="top5" id="top5"><li class="muted">Carregando…</li></ol>
-      <button class="big-btn flash" id="room-play">⚡ Jogar Relâmpago</button>
+      <button class="big-btn flash" id="room-play">${icon('zap')} Jogar Relâmpago</button>
       <button class="link-btn" id="room-leave">Trocar de sala</button>`;
     body.appendChild(box);
     box.querySelector('#room-play').addEventListener('click', () => UI.startFlash());
@@ -98,7 +98,7 @@ const Sala = (() => {
     try {
       const rows = await rpc('tapbit_top5', { p_codigo: code }) || [];
       if (!rows.length) { ol.innerHTML = '<li class="muted">Ninguém jogou hoje ainda. Seja o primeiro!</li>'; return; }
-      ol.innerHTML = rows.map((r, i) => `<li class="${me && r.nome.toLowerCase() === me.toLowerCase() ? 'me' : ''}"><span class="pos">${['🥇', '🥈', '🥉', '4', '5'][i]}</span><span class="nm">${esc(r.nome)}</span><b>${fmt(r.pontos)}</b></li>`).join('');
+      ol.innerHTML = rows.map((r, i) => `<li class="${me && r.nome.toLowerCase() === me.toLowerCase() ? 'me' : ''}"><span class="pos">${i + 1}</span><span class="nm">${esc(r.nome)}</span><b>${fmt(r.pontos)}</b></li>`).join('');
     } catch (e) { ol.innerHTML = `<li class="muted">${offline(e)}</li>`; }
   }
 
@@ -107,7 +107,7 @@ const Sala = (() => {
     box.className = 'panel teacher';
     const rooms = Store.data.teacherRooms || [];
     box.innerHTML = `
-      <summary>👩‍🏫 Sou professor(a)</summary>
+      <summary>${icon('user')} Sou professor(a)</summary>
       <label class="field-l">Nome da turma<input id="t-name" maxlength="40" placeholder="Ex: 5º ano B"></label>
       <button class="big-btn primary" id="t-create">Criar sala</button>
       <p class="msg" id="t-msg"></p>
