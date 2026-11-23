@@ -39,6 +39,7 @@ const Game = (() => {
     canvas.style.height = H + 'px';
     ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
     buildCity();
+    Scene3D.resize(W, H, DPR);
   }
   window.addEventListener('resize', () => { if (screen.classList.contains('active')) resize(); });
   // o campo muda de tamanho quando o painel de respostas aparece ou some
@@ -191,6 +192,7 @@ const Game = (() => {
       emp: 0, spawnTimer: 0.6, timeLeft: L.duration || 0, ended: false, paused: false,
       shake: 0, aim: -Math.PI / 2, lastV: -1, wait: 0, tick: 0, robotMood: 'happy', moodT: 0,
     };
+    Scene3D.reset();
     els.title.textContent = L.sector ? `Setor ${L.id} · ${L.name}` : L.name;
     buildPanel();
     resize();
@@ -724,7 +726,19 @@ const Game = (() => {
   }
 
   // ---------- Desenho ----------
+  // Modo 3D: o cenário vem do Scene3D; aqui só o robô e os pontos flutuantes, por cima.
   function draw() {
+    if (Scene3D.active) {
+      ctx.clearRect(0, 0, W, H);
+      Scene3D.render({ st, L, T, pos, ground, cannonPos, bossX, shieldY });
+      drawRobot(ctx, W / 2 - 60, ground() - 22, 44, Store.data.equip.robot, T, st.robotMood);
+      st.floats.forEach((f) => {
+        ctx.globalAlpha = Math.max(0, f.life);
+        numberText(f.text, f.x, f.y, 18, f.c);
+      });
+      ctx.globalAlpha = 1;
+      return;
+    }
     ctx.save();
     ctx.clearRect(0, 0, W, H);
     if (st.shake > 0) ctx.translate((Math.random() - 0.5) * 12 * st.shake, (Math.random() - 0.5) * 12 * st.shake);
