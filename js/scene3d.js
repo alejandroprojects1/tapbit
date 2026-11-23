@@ -28,12 +28,17 @@ const Scene3D = (() => {
   const wy = (y) => H / 2 - y;
 
   // ---------- Texturas desenhadas em canvas ----------
+  // Texturas desenhadas em alta definição (2x o tamanho pedido) e com filtragem máxima do aparelho.
+  const TEXQ = 2;
+  const MAX_ANISO = renderer.capabilities.getMaxAnisotropy ? renderer.capabilities.getMaxAnisotropy() : 4;
   function canvasTex(w, h, draw) {
     const c = document.createElement('canvas');
-    c.width = w; c.height = h;
-    draw(c.getContext('2d'), w, h);
+    c.width = w * TEXQ; c.height = h * TEXQ;
+    const g = c.getContext('2d');
+    g.scale(TEXQ, TEXQ);
+    draw(g, w, h);
     const t = new THREE.CanvasTexture(c);
-    t.anisotropy = 4;
+    t.anisotropy = MAX_ANISO;
     return t;
   }
   const glowTex = canvasTex(128, 128, (g, w) => {
@@ -191,6 +196,11 @@ const Scene3D = (() => {
     depthWrite: false, depthTest: false,
   });
   SHARED.add(skyMat);
+  const starTex = canvasTex(32, 32, (g, w) => {
+    const r = g.createRadialGradient(w / 2, w / 2, 0, w / 2, w / 2, w / 2);
+    r.addColorStop(0, 'rgba(255,255,255,1)'); r.addColorStop(0.45, 'rgba(255,255,255,1)'); r.addColorStop(0.7, 'rgba(255,255,255,.35)'); r.addColorStop(1, 'rgba(255,255,255,0)');
+    g.fillStyle = r; g.fillRect(0, 0, w, w);
+  });
   const discTex = canvasTex(128, 128, (g, w) => {
     g.fillStyle = '#fff'; g.beginPath(); g.arc(w / 2, w / 2, w * 0.46, 0, Math.PI * 2); g.fill();
   });
@@ -353,7 +363,7 @@ const Scene3D = (() => {
     }
     const sg = new THREE.BufferGeometry();
     sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
-    stars = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 2.4, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false, fog: false }));
+    stars = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, map: starTex, size: 2.2, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false, fog: false }));
     env.add(stars);
 
     // sol e lua
@@ -578,7 +588,7 @@ const Scene3D = (() => {
     });
     const sw = w - 30, sh = h * 0.44;
     const sc = document.createElement('canvas');
-    sc.width = 512; sc.height = Math.round(512 * sh / sw);
+    sc.width = 1024; sc.height = Math.round(1024 * sh / sw);
     const stex = new THREE.CanvasTexture(sc);
     const screen = new THREE.Mesh(new THREE.PlaneGeometry(sw, sh), new THREE.MeshBasicMaterial({ map: stex, transparent: true }));
     screen.position.set(0, h * 0.12 - sh / 2, 24);
@@ -797,7 +807,7 @@ const Scene3D = (() => {
   // se ainda assim ficar lento, desliga o 3D e o jogo continua no desenho 2D.
   // Degraus: resolução cheia -> fundo "congelado" (desenhado uma vez só) -> resolução menor -> 2D.
   let quality = 0, devDpr = 1, frames = 0, tAcc = 0, lastT = 0;
-  const STEPS = [{ res: 2, bake: false }, { res: 2, bake: true }, { res: 1.25, bake: true }, { res: 0.85, bake: true }];
+  const STEPS = [{ res: 3, bake: false }, { res: 3, bake: true }, { res: 2, bake: true }, { res: 1.5, bake: true }];
   const RES = STEPS.map((x) => x.res);
   let baked = false, rt = null, bakedP = -1;
   function applyRes() {
@@ -835,10 +845,10 @@ const Scene3D = (() => {
     lastT = now;
     if (dt > 250) { frames = 0; tAcc = 0; return; }       // aba escondida, pausa etc.
     frames++;
-    if (frames <= 20) return;                              // ignora o começo
+    if (frames <= 45) return;                              // ignora o começo (texturas e shaders ainda carregando)
     tAcc += dt;
-    if (frames < 110) return;
-    const fps = 1000 * 90 / tAcc;
+    if (frames < 165) return;
+    const fps = 1000 * 120 / tAcc;
     frames = 0; tAcc = 0;
     if (fps >= 40) return;
     if (quality < RES.length - 1) { quality++; applyRes(); }

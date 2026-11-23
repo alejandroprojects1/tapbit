@@ -308,7 +308,7 @@ function drawAntenna(c, R, s, hy, t, lw) {
 const RobotView = (() => {
   const views = new Map();
   function set(canvas, getSkin, mood = 'happy') {
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
     if (!canvas.dataset.w) { canvas.dataset.w = canvas.getAttribute('width'); canvas.dataset.h = canvas.getAttribute('height'); }
     const w = +canvas.dataset.w, h = +canvas.dataset.h;
     if (!canvas.dataset.css) {

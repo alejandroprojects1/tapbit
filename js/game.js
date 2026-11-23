@@ -31,7 +31,7 @@ const Game = (() => {
   function resize() {
     const r = field.getBoundingClientRect();
     if (!r.width || !r.height) return;
-    DPR = Math.min(2, window.devicePixelRatio || 1);
+    DPR = Math.min(3, window.devicePixelRatio || 1);
     W = r.width; H = r.height;
     canvas.width = Math.round(W * DPR);
     canvas.height = Math.round(H * DPR);

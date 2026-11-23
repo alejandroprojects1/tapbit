@@ -100,7 +100,7 @@ const Shop = (() => {
 const LaserPreview = (() => {
   const list = [];
   function add(cv, id) {
-    const dpr = Math.min(2, window.devicePixelRatio || 1);
+    const dpr = Math.min(3, window.devicePixelRatio || 1);
     const w = cv.width, h = cv.height;
     cv.style.width = w + 'px'; cv.style.height = h + 'px';
     cv.width = w * dpr; cv.height = h * dpr;
