@@ -46,6 +46,11 @@ const SECTORS = [
       { name: 'Rei Glitch', words: ['CODIGO', 'BINARIO'], charge: 18 },
     ].map((l) => Object.assign(l, { kind: 'letters', bits: 5, shield: 3, count: l.words.join('').length })),
   },
+  {
+    id: 5, name: 'Mundo dos Pixels', icon: 'grid', color: '#f472b6', isNew: true,
+    desc: 'A tela é feita de pixels! 1 acende, 0 apaga. Complete as linhas e descubra a imagem.',
+    levels: PIXEL_LEVELS.map((l) => Object.assign({ kind: 'pixel' }, l)),
+  },
 ];
 
 SECTORS.forEach((s) => s.levels.forEach((l, i) => {
@@ -61,6 +66,8 @@ const nextLevel = (l) => ALL_LEVELS[ALL_LEVELS.indexOf(l) + 1] || null;
 
 function isUnlocked(l) {
   if (Store.data.unlockAll) return true;
+  // o Mundo dos Pixels é uma trilha própria, aberta desde o começo
+  if (l.sector === 5) return l.index === 0 || (Store.data.stars[`5-${l.index}`] || 0) > 0;
   const i = ALL_LEVELS.indexOf(l);
   return i === 0 || (Store.data.stars[ALL_LEVELS[i - 1].id] || 0) > 0;
 }

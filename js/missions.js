@@ -11,6 +11,7 @@ const Missions = (() => {
     { id: 'letters', text: 'Decifre 6 letras secretas', hint: 'Setor 4: A=1, B=2, C=3…', goal: 6, reward: 40 },
     { id: 'stars', text: 'Ganhe 3 estrelas em uma fase', hint: 'Precisão vale mais que pressa!', goal: 1, reward: 40 },
     { id: 'flash', text: 'Jogue 1 Missão Relâmpago', hint: 'Um minuto, quantos acertos?', goal: 1, reward: 25 },
+    { id: 'pixel', text: 'Revele 1 imagem no Mundo dos Pixels', hint: '1 acende o pixel, 0 deixa apagado.', goal: 1, reward: 30 },
   ];
 
   function pick() {
@@ -63,6 +64,7 @@ const Missions = (() => {
     } else if (ev === 'combo') bump('combo', info.streak, true);
     else if (ev === 'stars' && info.stars >= 3) bump('stars');
     else if (ev === 'flash') bump('flash');
+    else if (ev === 'pixel') bump('pixel');
   }
 
   function claim(id) {
