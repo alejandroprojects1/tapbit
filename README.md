@@ -32,6 +32,7 @@ O progresso fica salvo no próprio aparelho (localStorage).
 
 ### Cenário 3D
 O campo de batalha é desenhado em 3D com [Three.js](https://threejs.org) (copiado em `js/vendor/`, sem depender de outro site).
+O cenário acompanha o avanço: Setor 1 de manhã, Setor 2 à tarde, Setor 3 no pôr do sol e Setor 4 à noite; dentro de cada fase o céu muda um pouco a cada acerto (na Missão Relâmpago, o dia inteiro passa em 1 minuto).
 O jogo mede a velocidade do aparelho: se ficar lento, baixa a resolução do 3D e, em último caso, troca sozinho para o desenho 2D.
 Para forçar o modo 2D, abra o jogo com `?2d` no fim do endereço.
 

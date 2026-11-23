@@ -126,16 +126,16 @@ const Scene3D = (() => {
     return g;
   }
 
-  // ---------- Estilo cartoon: sombreado em faixas (toon) + contorno de tinta ----------
+  // ---------- Estilo cartoon: sombreado em faixas (toon) + contorno só nos objetos do jogo ----------
   const toonGrad = (() => {
-    const d = new Uint8Array([90, 90, 90, 255, 160, 160, 160, 255, 225, 225, 225, 255, 255, 255, 255, 255]);
+    const d = new Uint8Array([110, 110, 110, 255, 170, 170, 170, 255, 215, 215, 215, 255, 240, 240, 240, 255]);
     const t = new THREE.DataTexture(d, 4, 1, THREE.RGBAFormat);
     t.minFilter = t.magFilter = THREE.NearestFilter;
     t.needsUpdate = true;
     return t;
   })();
   const toon = (color, extra) => new THREE.MeshToonMaterial(Object.assign({ color, gradientMap: toonGrad }, extra || {}));
-  const inkMat = new THREE.MeshBasicMaterial({ color: 0x150c33, side: THREE.BackSide });
+  const inkMat = new THREE.MeshBasicMaterial({ color: 0x1b1240, side: THREE.BackSide });
   const SHARED = new Set([inkMat]);
   // malha + "casca" escura um pouco maior vista por dentro = contorno de desenho animado
   function ink(geo, mat, thick = 1.6) {
@@ -148,48 +148,65 @@ const Scene3D = (() => {
     const m = new THREE.Mesh(geo, mat);
     g.add(o); g.add(m);
     g.userData.main = m;
-    g.userData.outline = o;
     return g;
   }
 
-  // céu de entardecer digital
-  const duskTex = canvasTex(64, 1024, (g, w, h) => {
-    const r = g.createLinearGradient(0, 0, 0, h);
-    r.addColorStop(0, '#090b2a'); r.addColorStop(0.28, '#1a1650'); r.addColorStop(0.42, '#3d2275');
-    r.addColorStop(0.5, '#9a3f8f'); r.addColorStop(0.555, '#ff8f78'); r.addColorStop(0.6, '#5a2a7a'); r.addColorStop(1, '#2a1650');
-    g.fillStyle = r; g.fillRect(0, 0, w, h);
+  // ---------- Hora do dia: muda conforme o jogo avança ----------
+  // Setor 1 = manhã, 2 = tarde, 3 = pôr do sol, 4 = noite clara. Dentro da fase o céu anda um pouco a cada acerto.
+  const SKIES = [
+    { name: 'manhã', top: '#6ec3ff', mid: '#b4e2ff', hor: '#fff4dc', ground: '#8edca8', far: '#86c9e6', near: '#55c98a', sun: '#fff3b0', sunY: 0.78, cloud: '#ffffff', hemi: '#ffffff', light: '#fff6e0', stars: 0, moon: 0 },
+    { name: 'tarde', top: '#4ea9ff', mid: '#9fd4ff', hor: '#ffe6b8', ground: '#a6db90', far: '#97b8ee', near: '#6fc483', sun: '#ffd77a', sunY: 0.55, cloud: '#fffaf0', hemi: '#fff3e0', light: '#ffe6c0', stars: 0, moon: 0 },
+    { name: 'pôr do sol', top: '#7c86e0', mid: '#f6b3cf', hor: '#ffcf9e', ground: '#c9a8e4', far: '#c08fe0', near: '#8f7ee0', sun: '#ff9f7a', sunY: 0.22, cloud: '#ffe0ec', hemi: '#ffd6e6', light: '#ffb98f', stars: 0, moon: 0 },
+    { name: 'noite', top: '#33408c', mid: '#6670c8', hor: '#a9b2f0', ground: '#6d79c9', far: '#7179cf', near: '#4f5cb8', sun: '#fff6d8', sunY: 0.7, cloud: '#b9c0f2', hemi: '#c8d0ff', light: '#d8e0ff', stars: 1, moon: 1 },
+  ];
+  const cA = new THREE.Color(), cB = new THREE.Color();
+  function mix(key, a, b, t, out) { cA.set(a[key]); cB.set(b[key]); return out.copy(cA).lerp(cB, t); }
+  function skyAt(p) {           // p vai de 0 (manhã do setor 1) a 3 (noite)
+    p = Math.max(0, Math.min(3, p));
+    const i = Math.min(2, Math.floor(p)), t = p - i;
+    return { a: SKIES[i], b: SKIES[i + 1], t };
+  }
+  function progressOf(view) {
+    const { st, L } = view;
+    if (L.duration) return 3 * (1 - st.timeLeft / L.duration);               // Relâmpago: o dia inteiro em 1 minuto
+    const within = L.count ? st.done / L.count : 0;
+    return (L.sector - 1) + Math.min(0.95, (L.index + within) / 5) * 0.95;     // fases do setor avançam a hora aos pouquinhos
+  }
+
+  // céu em degradê desenhado direto na tela (cores vêm de SKIES)
+  const skyMat = new THREE.ShaderMaterial({
+    uniforms: { uTop: { value: new THREE.Color() }, uMid: { value: new THREE.Color() }, uHor: { value: new THREE.Color() } },
+    vertexShader: 'varying float vY; void main() { vY = position.y; gl_Position = vec4(position.xy, 0.9999, 1.0); }',
+    fragmentShader: `
+      uniform vec3 uTop; uniform vec3 uMid; uniform vec3 uHor; varying float vY;
+      void main() {
+        float h = clamp(vY, 0.0, 1.0);
+        vec3 c = mix(uHor, uMid, smoothstep(0.0, 0.35, h));
+        c = mix(c, uTop, smoothstep(0.35, 1.0, h));
+        if (vY < 0.0) c = uHor;
+        gl_FragColor = vec4(c, 1.0);
+      }`,
+    depthWrite: false, depthTest: false,
   });
-  scene.background = duskTex;
-  // chão de placa de circuito
-  const circuitTex = canvasTex(256, 256, (g, w) => {
+  SHARED.add(skyMat);
+  const discTex = canvasTex(128, 128, (g, w) => {
+    g.fillStyle = '#fff'; g.beginPath(); g.arc(w / 2, w / 2, w * 0.46, 0, Math.PI * 2); g.fill();
+  });
+  const gridTex2 = canvasTex(128, 128, (g, w) => {
     g.fillStyle = '#000'; g.fillRect(0, 0, w, w);
-    g.strokeStyle = '#ffffff'; g.lineCap = 'round'; g.lineJoin = 'round';
-    for (let i = 0; i < 14; i++) {
-      let x = Math.round(Math.random() * 8) * 32, y = Math.round(Math.random() * 8) * 32;
-      g.lineWidth = Math.random() < 0.3 ? 4 : 2;
-      g.globalAlpha = 0.35 + Math.random() * 0.5;
-      g.beginPath(); g.moveTo(x, y);
-      for (let k = 0; k < 4; k++) {
-        const d = Math.floor(Math.random() * 4);
-        const len = 32 * (1 + Math.floor(Math.random() * 3));
-        x += [len, -len, 0, 0][d]; y += [0, 0, len, -len][d];
-        g.lineTo(x, y);
-      }
-      g.stroke();
-      g.beginPath(); g.arc(x, y, 5, 0, Math.PI * 2); g.fillStyle = '#fff'; g.fill();
-    }
-    g.globalAlpha = 0.18; g.lineWidth = 2;
+    g.strokeStyle = '#fff'; g.lineWidth = 2; g.globalAlpha = 0.6;
     g.strokeRect(0, 0, w, w);
   });
-  circuitTex.wrapS = circuitTex.wrapT = THREE.RepeatWrapping;
+  gridTex2.wrapS = gridTex2.wrapT = THREE.RepeatWrapping;
+
   // ---------- Luzes ----------
-  const hemi = new THREE.HemisphereLight(0xc4b5ff, 0x3a1d5c, 0.85);
+  const hemi = new THREE.HemisphereLight(0xffffff, 0x8fa0d8, 0.62);
   scene.add(hemi);
-  const sun = new THREE.DirectionalLight(0xffc08a, 1.05);   // luz quente do pôr do sol, vinda da direita
+  const sun = new THREE.DirectionalLight(0xfff2dc, 0.55);
   scene.add(sun);
-  const rim = new THREE.DirectionalLight(0x7aa2ff, 0.55);   // contraluz fria da esquerda
+  const rim = new THREE.DirectionalLight(0xb8c8ff, 0.35);
   scene.add(rim);
-  const cannonLight = new THREE.PointLight(0x3ee0ff, 1.3, 340, 2);
+  const cannonLight = new THREE.PointLight(0x3ee0ff, 0.8, 300, 2);
   scene.add(cannonLight);
 
   // ---------- Ambiente (refeito a cada mudança de tamanho) ----------
@@ -208,12 +225,11 @@ const Scene3D = (() => {
       uniform vec3 uColor; uniform float uAlpha; uniform float uTime;
       varying vec3 vN; varying vec3 vV; varying vec3 vP;
       void main() {
-        float f = pow(1.0 - abs(dot(vN, vV)), 2.2);
-        float hex = step(0.92, fract(vP.x * 0.04 + vP.y * 0.02)) + step(0.92, fract(vP.x * -0.04 + vP.y * 0.02));
+        float f = pow(1.0 - abs(dot(vN, vV)), 2.0);
         float scan = 0.5 + 0.5 * sin(vP.y * 0.12 - uTime * 3.0);
-        gl_FragColor = vec4(uColor, (f * 0.9 + hex * 0.06 + scan * 0.04 + 0.02) * uAlpha);
+        gl_FragColor = vec4(uColor, (f * 0.6 + scan * 0.025) * uAlpha);
       }`,
-    transparent: true, depthWrite: false, blending: THREE.AdditiveBlending, side: THREE.FrontSide,
+    transparent: true, depthWrite: false, side: THREE.FrontSide,
   });
   SHARED.add(shieldMat);
 
@@ -225,102 +241,104 @@ const Scene3D = (() => {
   }
 
   const rand = (a, b) => a + Math.random() * (b - a);
-  const pick = (a) => a[Math.floor(Math.random() * a.length)];
+  // materiais que mudam de cor com a hora do dia
+  const M = {
+    ground: toon(0xa7e8c0, { emissive: 0xffffff, emissiveMap: gridTex2, emissiveIntensity: 0.07 }),
+    far: toon(0xa9d9ee),
+    near: toon(0x86d9ad),
+    cloud: toon(0xffffff, { emissive: 0xffffff, emissiveIntensity: 0.25 }),
+    sun: new THREE.SpriteMaterial({ map: discTex, color: 0xfff3b0, fog: false, depthWrite: false }),
+    sunGlow: new THREE.SpriteMaterial({ map: glowTex, color: 0xfff3b0, fog: false, depthWrite: false, transparent: true, opacity: 0.55 }),
+    moon: new THREE.SpriteMaterial({ map: discTex, color: 0xfff6d8, fog: false, depthWrite: false, transparent: true }),
+  };
+  Object.values(M).forEach((m) => SHARED.add(m));
+
   function cloud(s) {
     const g = new THREE.Group();
-    const mat = toon(0xd8c8ff, { emissive: 0x3a2a70, emissiveIntensity: 0.35 });
-    const n = 4 + Math.floor(Math.random() * 3);
+    const n = 3 + Math.floor(Math.random() * 3);
     for (let i = 0; i < n; i++) {
-      const r = s * rand(0.28, 0.45);
-      const c = ink(new THREE.SphereGeometry(r, 14, 10), mat, 3);
-      c.position.set((i - (n - 1) / 2) * s * 0.32, Math.abs(i - (n - 1) / 2) < 1 ? r * 0.35 : 0, rand(-s * 0.1, s * 0.1));
+      const r = s * rand(0.3, 0.46);
+      const c = new THREE.Mesh(new THREE.SphereGeometry(r, 18, 12), M.cloud);
+      c.position.set((i - (n - 1) / 2) * s * 0.34, Math.abs(i - (n - 1) / 2) < 1 ? r * 0.3 : 0, 0);
       g.add(c);
     }
-    g.scale.y = 0.62;
+    g.scale.y = 0.6;
     return g;
   }
-  // montanha low-poly; com neve no pico se snow = true
-  function mountain(s, h, color, snow) {
-    const g = new THREE.Group();
-    const rot = Math.random() * Math.PI;
-    const m = ink(new THREE.ConeGeometry(s, h, 6), toon(color), Math.max(2, s * 0.012));
-    m.position.y = h / 2; m.rotation.y = rot; g.add(m);
-    if (snow) {
-      const ch = h * 0.3;
-      const cap = new THREE.Mesh(new THREE.ConeGeometry(s * 0.3 * 1.03, ch, 6), toon(0xf1e6ff, { emissive: 0x4a3a7a, emissiveIntensity: 0.4 }));
-      cap.position.y = h - ch / 2 + 0.5; cap.rotation.y = rot; g.add(cap);
-    }
-    return g;
+  function hill(r, h, mat) {
+    const m = new THREE.Mesh(new THREE.SphereGeometry(r, 32, 16, 0, Math.PI * 2, 0, Math.PI / 2), mat);
+    m.scale.y = h / r;
+    return m;
   }
 
   function buildEnv(view) {
     if (env) { scene.remove(env); disposeTree(env); }
     if (live) { scene.remove(live); disposeTree(live); }
     env = new THREE.Group();
-    env.userData = { clouds: [], cars: [], lights: [] };
+    env.userData = { clouds: [] };
     scene.add(env);
     live = new THREE.Group();   // o que continua sendo desenhado ao vivo mesmo com o fundo "congelado"
     scene.add(live);
     const gy = wy(view.ground());
-    const fogOff = (m) => m.traverse((o) => { if (o.material) o.material.fog = false; });
 
-    // estrelas só no alto do céu
-    const N = 220;
+    // céu: um retângulo do tamanho da tela, atrás de tudo
+    const sky = new THREE.Mesh(new THREE.PlaneGeometry(2, 2), skyMat);
+    sky.frustumCulled = false;
+    sky.renderOrder = -10;
+    env.add(sky);
+
+    // estrelas (aparecem à noite)
+    const N = 160;
     const sp = new Float32Array(N * 3);
     for (let i = 0; i < N; i++) {
       sp[i * 3] = (Math.random() - 0.5) * W * 6;
-      sp[i * 3 + 1] = H * 0.6 + Math.random() * H * 2.4;
-      sp[i * 3 + 2] = -1800 - Math.random() * 1600;
+      sp[i * 3 + 1] = H * 0.5 + Math.random() * H * 2.6;
+      sp[i * 3 + 2] = -2600;
     }
     const sg = new THREE.BufferGeometry();
     sg.setAttribute('position', new THREE.BufferAttribute(sp, 3));
-    stars = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xfff6e8, size: 2.2, sizeAttenuation: false, transparent: true, opacity: 0.8, depthWrite: false, fog: false }));
+    stars = new THREE.Points(sg, new THREE.PointsMaterial({ color: 0xffffff, size: 2.4, sizeAttenuation: false, transparent: true, opacity: 0, depthWrite: false, fog: false }));
     env.add(stars);
 
-    // planeta com anel e uma lua
-    const planet = new THREE.Group();
-    const pr = Math.max(W, H) * 0.42;
-    const ball = ink(new THREE.SphereGeometry(pr, 40, 28), toon(0xff9ec7, { emissive: 0x5a1f5a, emissiveIntensity: 0.5 }), 8);
-    planet.add(ball);
-    const band = new THREE.Mesh(new THREE.TorusGeometry(pr * 1.55, pr * 0.09, 6, 80), toon(0xffd9a8, { emissive: 0x6a3a2a, emissiveIntensity: 0.5 }));
-    band.rotation.x = Math.PI / 2.3; band.rotation.y = 0.25;
-    planet.add(band);
-    planet.position.set(W * 1.15, H * 1.25, -2600);
-    fogOff(planet);
-    env.add(planet);
-    const moon = ink(new THREE.SphereGeometry(pr * 0.22, 24, 16), toon(0xfff1c9, { emissive: 0x6a5a3a, emissiveIntensity: 0.7 }), 4);
-    moon.position.set(-W * 1.1, H * 1.6, -2600);
-    fogOff(moon);
+    // sol e lua
+    const S = Math.max(W, H);
+    const sunG = new THREE.Group();
+    const glow = new THREE.Sprite(M.sunGlow); glow.scale.set(S * 3.2, S * 3.2, 1); sunG.add(glow);
+    const disc = new THREE.Sprite(M.sun); disc.scale.set(S * 0.95, S * 0.95, 1); sunG.add(disc);
+    sunG.renderOrder = -5;
+    env.add(sunG);
+    const moon = new THREE.Sprite(M.moon); moon.scale.set(S * 0.6, S * 0.6, 1);
+    moon.position.set(-W * 1.0, H * 1.6, -2700);
     env.add(moon);
+    env.userData.sun = sunG;
+    env.userData.moon = moon;
 
-    // cordilheiras em três camadas: picos nevados ao fundo, montanhas no meio e colinas perto
-    const range = (n, span, z, dz, sMin, sMax, ratio, colors, snow) => {
-      for (let i = 0; i < n; i++) {
-        const sz = rand(sMin, sMax);
-        const m = mountain(sz, sz * rand(ratio[0], ratio[1]), pick(colors), snow);
-        m.position.set(-span / 2 + (i + 0.5) * (span / n) + rand(-span / n * 0.3, span / n * 0.3), gy, z - rand(0, dz));
-        env.add(m);
-      }
-    };
-    range(10, W * 7, -2300, 500, 300, 560, [0.7, 1.05], [0x3b2468, 0x452a78, 0x33205e], true);
-    range(9, W * 4.4, -1150, 250, 200, 360, [0.65, 0.95], [0x4a2f88, 0x56349a, 0x3f2a80], true);
-    range(9, W * 2.6, -480, 120, 90, 170, [0.45, 0.7], [0x2f3f8f, 0x34479a, 0x2b5f8f], false);
+    // colinas arredondadas em duas camadas
+    for (let i = 0; i < 7; i++) {
+      const r = rand(500, 900);
+      const h = hill(r, r * rand(0.28, 0.4), M.far);
+      h.position.set(-W * 3.2 + i * W * 1.05 + rand(-120, 120), gy, -1900 - rand(0, 300));
+      env.add(h);
+    }
+    for (let i = 0; i < 7; i++) {
+      const r = rand(220, 380);
+      const h = hill(r, r * rand(0.25, 0.38), M.near);
+      h.position.set(-W * 1.8 + i * W * 0.6 + rand(-60, 60), gy, -650 - rand(0, 150));
+      env.add(h);
+    }
 
-    // nuvens cartoon
-    for (let i = 0; i < 6; i++) {
-      const c = cloud(rand(120, 220));
-      c.position.set(rand(-W * 2.5, W * 2.5), rand(H * 0.05, H * 0.75), -1300 - rand(0, 700));
-      c.userData.v = rand(6, 16) * (Math.random() < 0.5 ? -1 : 1);
+    // nuvens fofas
+    for (let i = 0; i < 5; i++) {
+      const c = cloud(rand(110, 190));
+      c.position.set(rand(-W * 2.2, W * 2.2), rand(H * 0.25, H * 1.0), -1400 - rand(0, 500));
+      c.userData.v = rand(8, 18) * (Math.random() < 0.5 ? -1 : 1);
       env.userData.clouds.push(c);
       env.add(c);
     }
 
-    // chão de placa de circuito
-    circuitTex.repeat.set(26, 26);
-    ground = new THREE.Mesh(
-      new THREE.PlaneGeometry(W * 14, 5200),
-      toon(0x221d5a, { emissive: 0x3ee0ff, emissiveMap: circuitTex, emissiveIntensity: 0.55 }),
-    );
+    // chão
+    gridTex2.repeat.set(24, 24);
+    ground = new THREE.Mesh(new THREE.PlaneGeometry(W * 14, 5200), M.ground);
     ground.rotation.x = -Math.PI / 2;
     ground.position.set(0, gy, -2500);
     env.add(ground);
@@ -340,18 +358,18 @@ const Scene3D = (() => {
     const c = view.cannonPos();
     cannon.position.set(wx(c.x), wy(c.y), 0);
     const pedH = view.ground() - c.y;
-    const pad = ink(new THREE.CylinderGeometry(30, 32, 6, 28), toon(0x2a2f6e));
+    const pad = ink(new THREE.CylinderGeometry(30, 32, 6, 28), toon(0x5b6bd6));
     pad.position.y = -pedH + 3; cannon.add(pad);
     const padLight = new THREE.Mesh(new THREE.TorusGeometry(30, 1.2, 6, 40), new THREE.MeshBasicMaterial({ color: 0x3ee0ff }));
     padLight.rotation.x = Math.PI / 2; padLight.position.y = -pedH + 6.2; cannon.add(padLight);
-    const ped = ink(new THREE.CylinderGeometry(14, 22, pedH, 24), toon(0x4a5ad0));
+    const ped = ink(new THREE.CylinderGeometry(14, 22, pedH, 24), toon(0x6a7cf0));
     ped.position.y = -pedH / 2; cannon.add(ped);
     const stripe = ink(new THREE.CylinderGeometry(19.5, 20.5, 5, 24), toon(0xfbbf24), 1);
     stripe.position.y = -pedH * 0.55; cannon.add(stripe);
-    const dome = ink(new THREE.SphereGeometry(19, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2), toon(0x6c7cf0));
+    const dome = ink(new THREE.SphereGeometry(19, 28, 14, 0, Math.PI * 2, 0, Math.PI / 2), toon(0x8a9bff));
     dome.position.y = -6; cannon.add(dome);
     const pivot = new THREE.Group();
-    const barrel = ink(new THREE.CylinderGeometry(5.5, 7, 32, 20), toon(0xeef0ff));
+    const barrel = ink(new THREE.CylinderGeometry(5.5, 7, 32, 20), toon(0xffffff));
     barrel.position.y = 16; pivot.add(barrel);
     const tip = new THREE.Mesh(new THREE.CylinderGeometry(6.4, 6.4, 6, 20), new THREE.MeshBasicMaterial({ color: 0x3ee0ff }));
     tip.position.y = 30; pivot.add(tip);
@@ -363,19 +381,44 @@ const Scene3D = (() => {
     cannonLight.position.set(wx(c.x), wy(c.y) + 30, 60);
   }
 
+  // aplica as cores da hora do dia
+  const tmp = new THREE.Color();
+  function applySky(p) {
+    const { a, b, t } = skyAt(p);
+    mix('top', a, b, t, skyMat.uniforms.uTop.value);
+    mix('mid', a, b, t, skyMat.uniforms.uMid.value);
+    mix('hor', a, b, t, skyMat.uniforms.uHor.value);
+    if (scene.fog) mix('hor', a, b, t, scene.fog.color);
+    mix('ground', a, b, t, M.ground.color);
+    mix('far', a, b, t, M.far.color);
+    mix('near', a, b, t, M.near.color);
+    mix('cloud', a, b, t, M.cloud.color);
+    mix('sun', a, b, t, M.sun.color);
+    M.sunGlow.color.copy(M.sun.color);
+    mix('hemi', a, b, t, hemi.color);
+    mix('light', a, b, t, sun.color);
+    const nightK = a.stars + (b.stars - a.stars) * t;
+    const moonK = a.moon + (b.moon - a.moon) * t;
+    stars.material.opacity = nightK * 0.9;
+    // o sol desce do alto da manhã até sumir no horizonte; à noite fica a lua
+    const sunY = a.sunY + (b.sunY - a.sunY) * t;
+    const sunVisible = 1 - moonK;
+    env.userData.sun.position.set(W * 0.9, -H * 0.05 + sunY * H * 1.6, -2600);
+    env.userData.sun.visible = sunVisible > 0.05;
+    M.sun.opacity = sunVisible; M.sun.transparent = true;
+    M.sunGlow.opacity = 0.5 * sunVisible;
+    M.moon.opacity = moonK;
+    env.userData.moon.visible = moonK > 0.05;
+    tmp.set(0xffffff);
+    void tmp;
+  }
+
   function animateEnv(dt, T, st) {
-    const u = env.userData;
-    u.clouds.forEach((c) => {
+    env.userData.clouds.forEach((c) => {
       c.position.x += c.userData.v * dt;
-      if (c.position.x > W * 2.8) c.position.x = -W * 2.8;
-      if (c.position.x < -W * 2.8) c.position.x = W * 2.8;
+      if (c.position.x > W * 2.6) c.position.x = -W * 2.6;
+      if (c.position.x < -W * 2.6) c.position.x = W * 2.6;
     });
-    u.cars.forEach((c) => {
-      c.position.x += c.userData.v * dt * (st.overdrive ? 2 : 1);
-      if (c.position.x > W * 1.6) c.position.x = -W * 1.6;
-      if (c.position.x < -W * 1.6) c.position.x = W * 1.6;
-    });
-    u.lights.forEach((b) => { b.visible = Math.sin(T * 2.2 + b.userData.blink) > -0.3; });
   }
 
   // ---------- Objetos dinâmicos ----------
@@ -383,18 +426,19 @@ const Scene3D = (() => {
   let boss = null;
 
   function haloSprite(color, scale, opacity = 0.5) {
-    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, opacity, depthWrite: false, blending: THREE.AdditiveBlending }));
+    const s = new THREE.Sprite(new THREE.SpriteMaterial({ map: glowTex, color, transparent: true, opacity, depthWrite: false }));
     s.scale.set(scale, scale, 1);
     return s;
   }
 
   function makeMeteor(t) {
     const g = new THREE.Group();
-    const halo = haloSprite(0xa78bfa, t.r * 3.6, 0.45);
+    const halo = haloSprite(0xa78bfa, t.r * 3.2, 0.22);
     halo.position.z = -t.r;
     g.add(halo);
-    const trail = new THREE.Sprite(new THREE.SpriteMaterial({ map: trailTex, color: 0xc4b5fd, transparent: true, opacity: 0.55, depthWrite: false, blending: THREE.AdditiveBlending }));
-    trail.scale.set(t.r * 1.5, t.r * 4.2, 1);
+    const trail = new THREE.Sprite(new THREE.SpriteMaterial({ map: trailTex, color: 0xc4b5fd, transparent: true, opacity: 0.55, depthWrite: false }));
+    trail.scale.set(t.r * 1.3, t.r * 4.2, 1);
+    trail.material.color.setHex(0xffffff);
     trail.position.set(0, t.r * 2.1, -t.r * 0.5);
     g.add(trail);
     const mat = toon(0x9b7bff, { emissive: 0x3a1a8a, emissiveIntensity: 0.35 });
@@ -424,7 +468,7 @@ const Scene3D = (() => {
     const n = t.code.length;
     const w = n * 26 + 28, h = labels ? 78 : 60;
     const g = new THREE.Group();
-    const halo = haloSprite(0xa78bfa, w * 1.9, 0.35);
+    const halo = haloSprite(0xa78bfa, w * 1.9, 0.18);
     halo.position.z = -30;
     g.add(halo);
     const bodyG = ink(slab(w - 8, h - 8, 20, 14), toon(0x5a3fc0, { emissive: 0x120a33, emissiveIntensity: 1 }), 2);
@@ -454,7 +498,7 @@ const Scene3D = (() => {
   function makeBoss(S) {
     const w = S, h = S * 0.6;
     const g = new THREE.Group();
-    const halo = haloSprite(0xf472b6, w * 2.1, 0.3);
+    const halo = haloSprite(0xf472b6, w * 2.1, 0.18);
     halo.position.z = -50;
     g.add(halo);
     const bodyMat = toon(0x7a3fd0, { emissive: 0x1a0838, emissiveIntensity: 1 });
@@ -575,8 +619,8 @@ const Scene3D = (() => {
   const UP = new THREE.Vector3(0, 1, 0);
   const beamPool = [];
   function segMesh() {
-    const glow = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 12, 1, true), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
-    const core = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 8, 1, true), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+    const glow = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 12, 1, true), new THREE.MeshBasicMaterial({ transparent: true, depthWrite: false }));
+    const core = new THREE.Mesh(new THREE.CylinderGeometry(1, 1, 1, 8, 1, true), new THREE.MeshBasicMaterial({ color: 0xffffff, transparent: true, depthWrite: false }));
     const g = new THREE.Group();
     g.add(glow); g.add(core);
     g.userData = { glow, core };
@@ -653,7 +697,7 @@ const Scene3D = (() => {
   const pGeo = new THREE.BufferGeometry();
   pGeo.setAttribute('position', new THREE.BufferAttribute(pPos, 3));
   pGeo.setAttribute('color', new THREE.BufferAttribute(pCol, 3));
-  const points = new THREE.Points(pGeo, new THREE.PointsMaterial({ size: 9, map: dotTex, vertexColors: true, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+  const points = new THREE.Points(pGeo, new THREE.PointsMaterial({ size: 9, map: dotTex, vertexColors: true, transparent: true, depthWrite: false }));
   points.frustumCulled = false;
   scene.add(points);
   const tmpC = new THREE.Color();
@@ -676,7 +720,7 @@ const Scene3D = (() => {
     const c = view.cannonPos();
     view.st.rings.forEach((r, i) => {
       if (!ringPool[i]) {
-        ringPool[i] = new THREE.Mesh(new THREE.TorusGeometry(1, 0.02, 8, 96), new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, depthWrite: false, blending: THREE.AdditiveBlending }));
+        ringPool[i] = new THREE.Mesh(new THREE.TorusGeometry(1, 0.02, 8, 96), new THREE.MeshBasicMaterial({ color: 0xfbbf24, transparent: true, depthWrite: false }));
         scene.add(ringPool[i]);
       }
       const m = ringPool[i];
@@ -698,7 +742,7 @@ const Scene3D = (() => {
   let quality = 0, devDpr = 1, frames = 0, tAcc = 0, lastT = 0;
   const STEPS = [{ res: 2, bake: false }, { res: 2, bake: true }, { res: 1.25, bake: true }, { res: 0.85, bake: true }];
   const RES = STEPS.map((x) => x.res);
-  let baked = false, rt = null;
+  let baked = false, rt = null, bakedP = -1;
   function applyRes() {
     renderer.setPixelRatio(Math.min(RES[quality], devDpr));
     renderer.setSize(W, H, false);
@@ -710,7 +754,7 @@ const Scene3D = (() => {
     const hidden = [];
     scene.children.forEach((o) => { if (o !== env && o.visible && !o.isLight) { hidden.push(o); o.visible = false; } });
     env.visible = true;
-    scene.background = duskTex;
+    scene.background = null;
     const size = renderer.getDrawingBufferSize(new THREE.Vector2());
     if (!rt || rt.width !== size.x || rt.height !== size.y) {
       if (rt) rt.dispose();
@@ -726,7 +770,7 @@ const Scene3D = (() => {
   }
   function unbake() {
     if (env) env.visible = true;
-    scene.background = duskTex;
+    scene.background = null;
   }
   function measure() {
     const now = performance.now();
@@ -756,8 +800,8 @@ const Scene3D = (() => {
     camera.lookAt(0, 0, 0);
     camera.far = DIST + 5000;
     camera.updateProjectionMatrix();
-    scene.fog = new THREE.Fog(0x4a2370, DIST + 150, DIST + 2300);
-    sun.position.set(W * 0.9, H * 0.7, DIST * 0.8);
+    scene.fog = new THREE.Fog(0xfff4dc, DIST + 1200, DIST + 4200);
+    sun.position.set(W * 0.8, H * 1.2, DIST);
     rim.position.set(-W, H * 0.3, -300);
     lastKey = '';
   }
@@ -777,9 +821,14 @@ const Scene3D = (() => {
     // nuvens, carros voadores e luzes piscando; o chão "anda" mais rápido no Overdrive
     const dt = Math.min(0.05, Math.max(0, T - (render.lastT || T)));
     render.lastT = T;
-    if (!baked) animateEnv(dt, T, st);
-    circuitTex.offset.y = (circuitTex.offset.y + (st.overdrive ? 0.03 : 0.004)) % 1;
-    stars.material.opacity = 0.6 + 0.25 * Math.sin(T * 1.5);
+    // hora do dia de acordo com o avanço no jogo (no modo econômico, o fundo é refeito quando a cor muda)
+    const p = progressOf(view);
+    applySky(p);
+    if (baked && Math.abs(p - bakedP) > 0.02) { bake(); bakedP = p; }
+    if (!baked) {
+      animateEnv(dt, T, st);
+      gridTex2.offset.y = (gridTex2.offset.y + (st.overdrive ? 0.02 : 0.003)) % 1;
+    }
 
     // escudo
     const lvl = st.maxShield ? st.shield / st.maxShield : 1;
@@ -793,7 +842,6 @@ const Scene3D = (() => {
     cannon.userData.tip.material.color.setHex(accent);
     cannon.userData.core.material.color.setHex(accent);
     cannonLight.color.setHex(accent);
-    hemi.color.setHex(st.overdrive ? 0xffd48a : 0xc4b5ff);
     cannon.userData.padLight.material.color.setHex(accent);
 
     syncThreats(view);
