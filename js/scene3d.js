@@ -182,21 +182,6 @@ const Scene3D = (() => {
     g.strokeRect(0, 0, w, w);
   });
   circuitTex.wrapS = circuitTex.wrapT = THREE.RepeatWrapping;
-  // janelas com luz quente e fria
-  const winTex2 = canvasTex(64, 128, (g, w, h) => {
-    g.fillStyle = '#000'; g.fillRect(0, 0, w, h);
-    for (let y = 8; y < h - 6; y += 16) {
-      for (let x = 7; x < w - 6; x += 14) {
-        const r = Math.random();
-        if (r < 0.5) continue;
-        g.fillStyle = r > 0.8 ? '#ffd27a' : '#7ff3ff';
-        g.globalAlpha = 0.55 + Math.random() * 0.45;
-        roundRect(g, x, y, 7, 9, 2); g.fill();
-      }
-    }
-  });
-  winTex2.wrapS = winTex2.wrapT = THREE.RepeatWrapping;
-
   // ---------- Luzes ----------
   const hemi = new THREE.HemisphereLight(0xc4b5ff, 0x3a1d5c, 0.85);
   scene.add(hemi);
@@ -241,93 +226,6 @@ const Scene3D = (() => {
 
   const rand = (a, b) => a + Math.random() * (b - a);
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
-  const PALETTE = [0x5b6cff, 0x7c5cff, 0x2fb7c9, 0xff7eb6, 0x3fc7a0, 0xffa86b, 0x6e8bff, 0xb27cff];
-
-  function windowMat(color, w, h, glow) {
-    const tex = winTex2.clone();
-    tex.needsUpdate = true;
-    tex.repeat.set(Math.max(1, Math.round(w / 22)), Math.max(1, Math.round(h / 30)));
-    return toon(color, { emissive: 0xffffff, emissiveMap: tex, emissiveIntensity: glow });
-  }
-  function blinker(color, r) {
-    const m = new THREE.Mesh(new THREE.SphereGeometry(r, 10, 8), new THREE.MeshBasicMaterial({ color }));
-    m.userData.blink = Math.random() * 6;
-    return m;
-  }
-
-  // Tipos de prédio da Cidade de Silício (base no chão, em y = 0 do grupo)
-  function towerRound(h, r, glow) {
-    const g = new THREE.Group();
-    const col = pick(PALETTE);
-    const body = ink(new THREE.CylinderGeometry(r, r * 1.05, h, 20), windowMat(col, r * 3, h, glow));
-    body.position.y = h / 2; g.add(body);
-    const ring = ink(new THREE.CylinderGeometry(r * 1.12, r * 1.12, Math.max(3, h * 0.04), 20), toon(0xffffff));
-    ring.position.y = h * 0.7; g.add(ring);
-    const dome = ink(new THREE.SphereGeometry(r * 0.95, 18, 10, 0, Math.PI * 2, 0, Math.PI / 2), toon(pick(PALETTE)));
-    dome.position.y = h; g.add(dome);
-    const ant = new THREE.Mesh(new THREE.CylinderGeometry(0.8, 0.8, r * 1.2, 6), toon(0xe8e4ff));
-    ant.position.y = h + r * 0.95 + r * 0.5; g.add(ant);
-    const bl = blinker(0xff5a7a, Math.max(2, r * 0.14)); bl.position.y = h + r * 1.6; g.add(bl);
-    return g;
-  }
-  function towerStack(w, h, d, glow) {
-    const g = new THREE.Group();
-    const col = pick(PALETTE);
-    let y = 0, cw = w, cd = d;
-    const parts = 2 + Math.floor(Math.random() * 2);
-    for (let i = 0; i < parts; i++) {
-      const ph = h * (i === 0 ? 0.55 : 0.45 / (parts - 1));
-      const b = ink(new THREE.BoxGeometry(cw, ph, cd), windowMat(col, cw, ph, glow));
-      b.position.y = y + ph / 2; g.add(b);
-      y += ph; cw *= 0.72; cd *= 0.8;
-      const cap = ink(new THREE.BoxGeometry(cw / 0.72 + 2, 3, cd / 0.8 + 2), toon(0xf5f3ff));
-      cap.position.y = y + 1.5; g.add(cap);
-    }
-    if (Math.random() < 0.6) {
-      const dish = ink(new THREE.SphereGeometry(cw * 0.3, 12, 8, 0, Math.PI * 2, 0, Math.PI / 2), toon(0xe8e4ff));
-      dish.rotation.x = Math.PI; dish.position.set(cw * 0.15, y + cw * 0.35, 0); dish.rotation.z = 0.6; g.add(dish);
-    }
-    const bl = blinker(0x7ff3ff, Math.max(1.6, w * 0.04)); bl.position.y = y + 4; g.add(bl);
-    return g;
-  }
-  function chipBuilding(w, d) {
-    const g = new THREE.Group();
-    const h = Math.max(8, w * 0.22);
-    const body = ink(new THREE.BoxGeometry(w, h, d), toon(0x272b5e));
-    body.position.y = h / 2; g.add(body);
-    const pinMat = toon(0xd9dcf5);
-    const n = Math.max(3, Math.floor(w / 9));
-    for (let i = 0; i < n; i++) {
-      const px = -w / 2 + (i + 0.5) * (w / n);
-      [-1, 1].forEach((side) => {
-        const pin = new THREE.Mesh(new THREE.BoxGeometry(3, h * 0.5, 5), pinMat);
-        pin.position.set(px, h * 0.25, side * (d / 2 + 2.5)); g.add(pin);
-      });
-    }
-    const label = new THREE.Mesh(new THREE.BoxGeometry(w * 0.4, 1.5, d * 0.4), new THREE.MeshBasicMaterial({ color: 0x3ee0ff }));
-    label.position.y = h + 0.8; g.add(label);
-    label.userData.blink = Math.random() * 6;
-    return g;
-  }
-  function domeHouse(r) {
-    const g = new THREE.Group();
-    const base = ink(new THREE.CylinderGeometry(r, r, r * 0.6, 20), windowMat(pick(PALETTE), r * 3, r * 0.6, 0.55));
-    base.position.y = r * 0.3; g.add(base);
-    const dome = ink(new THREE.SphereGeometry(r * 0.96, 20, 12, 0, Math.PI * 2, 0, Math.PI / 2), toon(0x8fc8f0, { emissive: 0x1a4a7a, emissiveIntensity: 0.35 }));
-    dome.position.y = r * 0.6; g.add(dome);
-    return g;
-  }
-  function tree(s) {
-    const g = new THREE.Group();
-    const trunk = ink(new THREE.CylinderGeometry(s * 0.09, s * 0.12, s * 0.5, 8), toon(0x8a5a3c), 1.2);
-    trunk.position.y = s * 0.25; g.add(trunk);
-    const crownCol = pick([0x3fc7a0, 0x55d68a, 0x2fb7c9]);
-    [[0, s * 0.62, 0, s * 0.32], [-s * 0.16, s * 0.5, 0, s * 0.22], [s * 0.17, s * 0.52, 0, s * 0.2]].forEach(([x, y, z, r]) => {
-      const c = ink(new THREE.SphereGeometry(r, 12, 10), toon(crownCol), 1.4);
-      c.position.set(x, y, z); g.add(c);
-    });
-    return g;
-  }
   function cloud(s) {
     const g = new THREE.Group();
     const mat = toon(0xd8c8ff, { emissive: 0x3a2a70, emissiveIntensity: 0.35 });
@@ -341,10 +239,17 @@ const Scene3D = (() => {
     g.scale.y = 0.62;
     return g;
   }
-  function mountain(s, color) {
+  // montanha low-poly; com neve no pico se snow = true
+  function mountain(s, h, color, snow) {
     const g = new THREE.Group();
-    const m = ink(new THREE.ConeGeometry(s, s * rand(0.6, 1.0), 6), toon(color), 4);
-    m.position.y = s * 0.35; m.rotation.y = Math.random(); g.add(m);
+    const rot = Math.random() * Math.PI;
+    const m = ink(new THREE.ConeGeometry(s, h, 6), toon(color), Math.max(2, s * 0.012));
+    m.position.y = h / 2; m.rotation.y = rot; g.add(m);
+    if (snow) {
+      const ch = h * 0.3;
+      const cap = new THREE.Mesh(new THREE.ConeGeometry(s * 0.3 * 1.03, ch, 6), toon(0xf1e6ff, { emissive: 0x4a3a7a, emissiveIntensity: 0.4 }));
+      cap.position.y = h - ch / 2 + 0.5; cap.rotation.y = rot; g.add(cap);
+    }
     return g;
   }
 
@@ -388,12 +293,18 @@ const Scene3D = (() => {
     fogOff(moon);
     env.add(moon);
 
-    // montanhas no horizonte
-    for (let i = 0; i < 9; i++) {
-      const m = mountain(rand(260, 520), pick([0x3b2468, 0x452a78, 0x33205e]));
-      m.position.set(-W * 3 + i * W * 0.75 + rand(-80, 80), gy, -2300 - rand(0, 500));
-      env.add(m);
-    }
+    // cordilheiras em três camadas: picos nevados ao fundo, montanhas no meio e colinas perto
+    const range = (n, span, z, dz, sMin, sMax, ratio, colors, snow) => {
+      for (let i = 0; i < n; i++) {
+        const sz = rand(sMin, sMax);
+        const m = mountain(sz, sz * rand(ratio[0], ratio[1]), pick(colors), snow);
+        m.position.set(-span / 2 + (i + 0.5) * (span / n) + rand(-span / n * 0.3, span / n * 0.3), gy, z - rand(0, dz));
+        env.add(m);
+      }
+    };
+    range(10, W * 7, -2300, 500, 300, 560, [0.7, 1.05], [0x3b2468, 0x452a78, 0x33205e], true);
+    range(9, W * 4.4, -1150, 250, 200, 360, [0.65, 0.95], [0x4a2f88, 0x56349a, 0x3f2a80], true);
+    range(9, W * 2.6, -480, 120, 90, 170, [0.45, 0.7], [0x2f3f8f, 0x34479a, 0x2b5f8f], false);
 
     // nuvens cartoon
     for (let i = 0; i < 6; i++) {
@@ -413,54 +324,6 @@ const Scene3D = (() => {
     ground.rotation.x = -Math.PI / 2;
     ground.position.set(0, gy, -2500);
     env.add(ground);
-
-    // Cidade de Silício
-    const place = (o, x, z) => { o.position.set(x, gy, z); env.add(o); return o; };
-    // fileira da frente: casinhas, chips e árvores (deixa o canhão livre)
-    let x = -W * 0.62;
-    while (x < W * 0.62) {
-      const r = Math.random();
-      let wdt;
-      if (Math.abs(x) < 40) { x += 18; continue; }
-      if (r < 0.3) { wdt = rand(30, 46); place(chipBuilding(wdt, rand(20, 30)), x + wdt / 2, -34); }
-      else if (r < 0.55) { wdt = rand(26, 36); place(domeHouse(wdt / 2), x + wdt / 2, -36); }
-      else if (r < 0.8) { wdt = rand(16, 22); place(tree(rand(34, 48)), x + wdt / 2, -22); }
-      else { wdt = rand(22, 32); place(towerStack(wdt, rand(30, 50), 26, 0.55), x + wdt / 2, -40); }
-      x += wdt + rand(4, 12);
-    }
-    // fileira do meio: torres
-    x = -W * 1.3;
-    while (x < W * 1.3) {
-      const wdt = rand(36, 70);
-      const o = Math.random() < 0.5 ? towerRound(rand(60, 120), wdt / 2, 0.42) : towerStack(wdt, rand(60, 130), wdt * 0.8, 0.42);
-      place(o, x + wdt / 2, -380 - rand(0, 80));
-      if (Math.random() < 0.35) place(tree(rand(50, 70)), x + wdt + 10, -340);
-      x += wdt + rand(50, 110);
-    }
-    // fileira do fundo: arranha-céus
-    x = -W * 2.6;
-    while (x < W * 2.6) {
-      const wdt = rand(60, 120);
-      const o = Math.random() < 0.5 ? towerRound(rand(180, 340), wdt / 2, 0.3) : towerStack(wdt, rand(200, 360), wdt * 0.8, 0.3);
-      place(o, x + wdt / 2, -950 - rand(0, 150));
-      x += wdt + rand(120, 240);
-    }
-    env.traverse((o) => { if (o !== env && typeof o.userData.blink === 'number') env.userData.lights.push(o); });
-
-    // carros voadores
-    for (let i = 0; i < 4; i++) {
-      const car = new THREE.Group();
-      const body = ink(new THREE.CapsuleGeometry(4, 12, 4, 10), toon(pick([0xffd27a, 0xff7eb6, 0x7ff3ff, 0xffffff])), 1.2);
-      body.rotation.z = Math.PI / 2; car.add(body);
-      const light = new THREE.Mesh(new THREE.SphereGeometry(2.4, 8, 6), new THREE.MeshBasicMaterial({ color: 0xff5a7a }));
-      light.position.x = -11; car.add(light);
-      const z = -180 - rand(0, 500);
-      car.position.set(rand(-W, W), gy + rand(H * 0.35, H * 0.7), z);
-      car.userData.v = rand(40, 90) * (i % 2 ? -1 : 1);
-      car.scale.x = car.userData.v < 0 ? -1 : 1;
-      env.userData.cars.push(car);
-      env.add(car);
-    }
 
     // escudo em cúpula (achatado em z para não chegar perto da câmera)
     const top = H - 116, drop = 30;
