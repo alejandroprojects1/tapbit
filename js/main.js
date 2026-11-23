@@ -38,7 +38,10 @@ const UI = (() => {
 
   function applyTheme() {
     const t = Store.data.equip.theme;
-    document.body.className = document.body.className.replace(/\btheme-\w+/g, '').trim() + ' theme-' + t;
+    // o tema vale só para o painel do jogo; assim as prévias da Oficina não herdam o tema equipado
+    const el = $('controls');
+    el.className = el.className.replace(/\btheme-\w+/g, '').trim() + ' theme-' + t;
+    document.body.className = document.body.className.replace(/\btheme-\w+/g, '').trim();
   }
 
   // ---------- Início ----------

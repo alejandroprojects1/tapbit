@@ -647,7 +647,7 @@ const Game = (() => {
   }
 
   // ---------- Atualização ----------
-  function update(dt) {
+  function update(dt, realDt = dt) {
     T += dt;
     if (st.shake > 0) st.shake -= dt;
     if (st.moodT > 0) { st.moodT -= dt; if (st.moodT <= 0) st.robotMood = 'happy'; }
@@ -655,7 +655,7 @@ const Game = (() => {
     if (!st.ended) {
       if (L.duration) {
         const before = Math.ceil(st.timeLeft);
-        st.timeLeft -= dt;
+        st.timeLeft -= realDt;
         if (Math.ceil(st.timeLeft) !== before && st.timeLeft <= 5 && st.timeLeft > 0) Sound.tick();
         if (st.timeLeft <= 0) { st.timeLeft = 0; banner('TEMPO!', 'gold'); end(true, 1.2); }
         if (Math.ceil(st.timeLeft) !== before) updateHud();
@@ -1197,9 +1197,12 @@ const Game = (() => {
 
   function frame(now) {
     if (!st) return;
-    const dt = Math.min(0.05, (now - last) / 1000);
+    // dt: passo da simulação (limitado para nada "teleportar" em aparelhos lentos)
+    // realDt: tempo de verdade, usado no relógio da Missão Relâmpago (1 minuto é 1 minuto em qualquer aparelho)
+    const realDt = Math.min(0.25, Math.max(0, (now - last) / 1000));
+    const dt = Math.min(0.05, realDt);
     last = now;
-    if (!st.paused) update(dt);
+    if (!st.paused) update(dt, realDt);
     if (st) draw();
     raf = requestAnimationFrame(frame);
   }

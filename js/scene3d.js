@@ -809,7 +809,7 @@ const Scene3D = (() => {
   let quality = 0, devDpr = 1, frames = 0, tAcc = 0, lastT = 0;
   const STEPS = [{ res: 3, bake: false }, { res: 3, bake: true }, { res: 2, bake: true }, { res: 1.5, bake: true }];
   const RES = STEPS.map((x) => x.res);
-  let baked = false, rt = null, bakedP = -1;
+  let baked = false, rt = null, bakedP = -1, bakedAt = 0;
   function applyRes() {
     renderer.setPixelRatio(Math.min(RES[quality], devDpr));
     renderer.setSize(W, H, false);
@@ -839,20 +839,26 @@ const Scene3D = (() => {
     if (env) env.visible = true;
     scene.background = null;
   }
+  // mede por TEMPO (não por número de quadros): decide a cada 2 s, depois de 1,5 s de aquecimento.
+  // Muito lento (< 15 fps) pula duas etapas de uma vez; sem mais etapas e ainda < 24 fps, troca para o 2D.
+  let warm = 0;
   function measure() {
     const now = performance.now();
     const dt = now - lastT;
     lastT = now;
-    if (dt > 250) { frames = 0; tAcc = 0; return; }       // aba escondida, pausa etc.
+    if (dt > 400) { frames = 0; tAcc = 0; return; }       // aba escondida, pausa etc.
+    if (warm < 1500) { warm += dt; return; }              // começo: texturas e shaders ainda carregando
     frames++;
-    if (frames <= 45) return;                              // ignora o começo (texturas e shaders ainda carregando)
     tAcc += dt;
-    if (frames < 165) return;
-    const fps = 1000 * 120 / tAcc;
+    if (tAcc < 2000) return;
+    const fps = 1000 * frames / tAcc;
     frames = 0; tAcc = 0;
     if (fps >= 40) return;
-    if (quality < RES.length - 1) { quality++; applyRes(); }
-    else if (fps < 24) { api.active = false; canvas.style.display = 'none'; }
+    if (quality < RES.length - 1) {
+      quality = Math.min(RES.length - 1, quality + (fps < 15 ? 2 : 1));
+      applyRes();
+      warm = 800;                                          // dá um respiro antes de medir de novo
+    } else if (fps < 24) { api.active = false; canvas.style.display = 'none'; }
   }
 
   let lastKey = '';
@@ -891,7 +897,8 @@ const Scene3D = (() => {
     // hora do dia de acordo com o avanço no jogo (no modo econômico, o fundo é refeito quando a cor muda)
     const p = progressOf(view);
     applySky(p);
-    if (baked && Math.abs(p - bakedP) > 0.02) { bake(); bakedP = p; }
+    // no modo econômico o fundo congelado só é refeito quando a cor do céu mudou de verdade, e no máximo a cada 2 s
+    if (baked && Math.abs(p - bakedP) > 0.05 && performance.now() - bakedAt > 2000) { bake(); bakedP = p; bakedAt = performance.now(); }
     if (!baked) {
       animateEnv(dt, T, st);
       lawnTex.offset.y = (lawnTex.offset.y + (st.overdrive ? 0.02 : 0.003)) % 1;

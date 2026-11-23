@@ -118,8 +118,11 @@ const Pixel = (() => {
     if (r) { r.classList.remove('pulse'); void r.offsetWidth; r.classList.add('pulse'); }
   }
 
+  const rowMatches = (y) => st.lit[y].every((b, i) => b === st.rows[y][i]);
+
   function lockRow() {
     const y = st.row;
+    if (y >= st.m || !rowMatches(y)) return;   // só fecha a linha se ela estiver certa (e uma vez só)
     const clean = st.rowErrors === 0;
     st.score += 100 + (clean ? 50 : 0);
     st.streak = clean ? st.streak + 1 : 0;
@@ -141,7 +144,9 @@ const Pixel = (() => {
     if (!st || st.done || st.row >= st.m) return;
     if (st.rows[st.row].every((b) => b === 0)) {
       toast(`Linha <b>${st.rows[st.row].join('')}</b>: tudo apagado!`);
-      later(900, () => { if (st && !st.done) lockRow(); });
+      const y = st.row;
+      // passa sozinha, a menos que o aluno tenha acendido algo (aí ela fecha quando ele apagar)
+      later(900, () => { if (st && !st.done && st.row === y) lockRow(); });
     }
   }
 
