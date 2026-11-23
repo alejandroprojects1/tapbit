@@ -1,9 +1,11 @@
-// Configuração do Ranking da Sala (Supabase).
-// Rode o arquivo supabase/tapbit.sql no "SQL Editor" do Supabase uma vez.
-// A chave "publishable / anon public" pode ficar aqui: ela foi feita para ser pública.
-// NUNCA coloque aqui a chave "service_role".
+// Configuração do Ranking da Sala (Supabase), em um projeto só do TapBit.
+// 1. No Supabase, rode o arquivo supabase/tapbit.sql no "SQL Editor".
+// 2. Em "Project Settings → API", copie a Project URL e a chave pública
+//    ("publishable" ou "anon public") e cole abaixo.
+// A chave pública pode ficar aqui: ela foi feita para ser pública.
+// NUNCA coloque aqui a chave "service_role" / "secret".
 // Com os dois campos vazios, o jogo funciona normalmente, só sem ranking.
 const SUPABASE = {
-  url: 'https://bmukbdzfrdrqduigcrad.supabase.co',
-  key: 'sb_publishable_ABcelTIoA0qNlYvH7dnnhw_Q83P5aYa',
+  url: '',
+  key: '',
 };

@@ -39,9 +39,11 @@ O progresso fica salvo no próprio aparelho (localStorage).
 > (**Settings → General → Danger Zone → Change visibility**).
 
 ## Ligar o Ranking da Sala (Supabase)
-O endereço e a chave pública do Supabase ficam em `js/config.js` (hoje, o mesmo projeto usado pelo Turtle Race).
-1. No Supabase, abra **SQL Editor**, cole o conteúdo de `supabase/tapbit.sql` e clique em **Run**.
-2. Pronto. No jogo: **Sala → Sou professor(a) → Criar sala** mostra o código e um QR Code do jogo.
+O TapBit usa um projeto Supabase só dele. O endereço e a chave pública ficam em `js/config.js`.
+1. Crie um projeto gratuito em [supabase.com](https://supabase.com).
+2. Abra **SQL Editor**, cole o conteúdo de `supabase/tapbit.sql` e clique em **Run**.
+3. Em **Project Settings → API**, copie a **Project URL** e a chave **publishable / anon public** para `js/config.js`.
+4. Pronto. No jogo: **Sala → Sou professor(a) → Criar sala** mostra o código e um QR Code do jogo.
 
 Os alunos só conseguem ver o top 5 do dia de uma sala cujo código conhecem; a tabela não pode ser lida diretamente.
 Sem o SQL, o jogo funciona normalmente e a tela da Sala avisa que o ranking ainda não foi ligado.
